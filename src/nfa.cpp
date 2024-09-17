@@ -61,18 +61,23 @@ void NFA::setFromTuple(vector<vector<string>> matrix)
     for (const auto &transition : matrix[2])
     {
         tuple<string, char, set<string>> data = splitString(transition);
+        bool registered = false;
 
-        if (this->q.find(get<0>(data)) != this->q.end() &&
-            this->sigma.find(get<1>(data)) != this->sigma.end())
-        {
-            bool flag = true;
-            for (const auto &delta : get<2>(data))
-                if (this->q.find(delta) == this->q.end())
-                    flag = false;
+        for (auto it = this->delta.begin(); it != this->delta.end(); ++it)
+            if (get<0>(*it) == get<0>(data) && get<1>(*it) == get<1>(data))
+            {
+                set<string> combinedSet = get<2>(*it);
+                combinedSet.insert(get<2>(data).begin(), get<2>(data).end());
 
-            if (flag)
-                this->delta.insert(data);
-        }
+                this->delta.erase(it);
+
+                delta.insert(make_tuple(get<0>(data), get<1>(data), combinedSet));
+                registered = true;
+                break;
+            }
+
+        if (!registered)
+            delta.insert(data);
     }
 
     // Establece q_0
@@ -132,7 +137,7 @@ void NFA::printTuple()
     }
     cout << "\nStart state (q_0): " << this->q_0;
 
-    cout << "\nFinal states (F): ";
+    cout << "\nvalue states (F): ";
     for (auto const &state : this->f)
         cout << state << ". ";
 
@@ -141,20 +146,59 @@ void NFA::printTuple()
 
 bool NFA::chainValid(string word)
 {
-    return false;
+    for (auto const &symbol : word)
+        if (this->sigma.find(symbol) == this->sigma.end())
+            return false;
+    return true;
 }
 
 bool NFA::testChain(string word)
 {
-    return true;
+    bool value = false;
+    recursiveTest(word, this->q_0, value);
+    return value;
 }
 
-set<string> NFA::getDelta(const string& data) {
+void NFA::recursiveTest(string word, string currentState, bool &value)
+{
+    // Caso base
+    if (value)
+        return;
+    if (word.empty())
+    {
+        // Encontrar si el estado value es un estado de aceptación
+        for (auto const &valueState : this->f)
+            if (valueState == currentState)
+                value = true;
+        return;
+    }
+    // Funcion recursiva
+
+    set<string> nextStates;
+    for (const auto &transition : this->delta)
+        if (get<0>(transition) == currentState && get<1>(transition) == word[0])
+        {
+            nextStates = get<2>(transition);
+            break; 
+        }
+
+    // Llamada recursiva
+    for (const auto &state : nextStates)
+    {
+        recursiveTest(word.substr(1), state, value);
+        if (value) 
+            return; // Salir si se encontró una aceptación
+    }
+}
+
+set<string> NFA::getDelta(const string &data)
+{
     set<string> result;
     stringstream ss(data);
     string word;
 
-    while (ss >> word) {
+    while (ss >> word)
+    {
         result.insert(trim(word));
     }
 

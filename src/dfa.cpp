@@ -120,7 +120,11 @@ void DFA::printTuple()
 
 bool DFA::chainValid(string word)
 {
-    return false;
+    for (auto const &symbol : word)
+        if(this->sigma.find(symbol) == this->sigma.end())
+            return false;
+
+    return true;   
 }
 
 bool DFA::testChain(string word)

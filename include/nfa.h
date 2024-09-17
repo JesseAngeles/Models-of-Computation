@@ -16,6 +16,8 @@ private:
     void setFromTuple(vector<vector<string>> matrix);
     set<string> getDelta(const string &content);
     tuple<string, char, set<string>> splitString(string transition);
+    void recursiveTest(string word, string currentState, bool &final);
+
 public:
     NFA() = default;
     NFA(const vector<vector<string>> &matrix);

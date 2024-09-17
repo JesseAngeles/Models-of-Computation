@@ -4,6 +4,7 @@
 #include <sstream>
 
 #include "./FiniteAutomaton.h"
+#include "./nfa.h"
 
 using namespace std;
 
