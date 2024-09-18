@@ -121,10 +121,10 @@ void DFA::printTuple()
 bool DFA::chainValid(string word)
 {
     for (auto const &symbol : word)
-        if(this->sigma.find(symbol) == this->sigma.end())
+        if (this->sigma.find(symbol) == this->sigma.end())
             return false;
 
-    return true;   
+    return true;
 }
 
 bool DFA::testChain(string word)
@@ -160,4 +160,72 @@ tuple<string, string, string> DFA::splitString(const string &str)
     }
 
     return {trim(subStrings[0]), trim(subStrings[1]), trim(subStrings[2])};
+}
+
+void DFA::nfa2dfa(NFA nfa)
+{
+    set<tuple<string, char, set<string>>> nfa_delta = nfa.get_delta();
+
+    this->sigma = nfa.get_sigma();
+    this->q_0 = nfa.get_q_0();
+    this->q.insert({q_0});
+
+    set<set<string>> visitedStates;
+    set<set<string>> unvisitedStates;
+
+    set<string> initialState;
+    initialState.insert(q_0);
+    visitedStates.insert(initialState);
+
+    while (!unvisitedStates.empty())
+    {
+        // Obtenemos todas las transiciones salientes de un estado
+        set<string> currentState = *unvisitedStates.begin();
+        unvisitedStates.erase(unvisitedStates.begin());
+        visitedStates.insert(currentState);
+
+        set<tuple<set<string>, char, set<string>>> multiTransitions;
+
+        for (char symbol : this->sigma)
+        {
+            set<string> nextStates;
+
+            for (auto const &trans : nfa_delta)
+            {
+                const string &fromState = get<0>(trans);
+                char transitionSymbol = get<1>(trans);
+                const set<string> &toStates = get<2>(trans);
+
+                if (currentState.find(fromState) != currentState.end() && symbol == transitionSymbol)
+                    nextStates.insert(toStates.begin(), toStates.end());
+
+                if (!nextStates.empty())
+                {
+                    multiTransitions.insert(make_tuple(currentState, symbol, nextStates));
+
+                    if (visitedStates.find(nextStates) == visitedStates.end())
+                        unvisitedStates.insert(nextStates);
+                }
+            }
+        }
+
+        // Establecer delta, q y f
+        for (auto const &trans : multiTransitions)
+        {
+            this->delta.insert(make_tuple(setToString(get<0>(trans)), get<1>(trans), setToString(get<2>(trans))));
+            this->q.insert(setToString(get<0>(trans)));
+            this->q.insert(setToString(get<2>(trans)));
+            for (auto &&f : nfa.get_f())
+                if(get<0>(trans).find(f) != get<0>(trans).end())
+                    this->f.insert(setToString(get<0>(trans)));
+        }
+    }
+}
+
+string DFA::setToString(set<string> info)
+{
+    string name;
+    for (auto const &str : info)
+        name += str;
+    return name;
 }

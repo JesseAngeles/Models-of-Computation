@@ -6,7 +6,7 @@
 #include "../include/dfa.h"
 #include "../include/nfa.h"
 
-void Menu(int &option);
+void Menu();
 vector<vector<string>> readCSV(int &, string);
 
 void test(DFA &dfa);
@@ -24,7 +24,10 @@ int main()
     do
     {
         error = 0;
-        Menu(option);
+        Menu();
+        if (currentAutomaton == -1)
+            cout << "6) NFA to DFA\n";
+        cin >> option;
         switch (option)
         {
         case 1:
@@ -69,6 +72,12 @@ int main()
             else
                 cout << "\nSet automaton before\n";
             break;
+        case 6:
+            if (currentAutomaton == -1)
+            {
+                currentAutomaton = 1;
+                dfa.nfa2dfa(nfa);
+            }
         }
 
     } while (option);
@@ -76,15 +85,14 @@ int main()
     return 0;
 }
 
-void Menu(int &option)
+void Menu()
 {
-    std::cout << "0) Exit" << std::endl;
-    std::cout << "1) Set dfa" << std::endl;
-    std::cout << "2) Set nfa" << std::endl;
-    std::cout << "3) Test chain" << std::endl;
-    std::cout << "4) Print in 5 tuple" << std::endl;
-    std::cout << "5) Print in matrix" << std::endl;
-    std::cin >> option;
+    cout << "0) Exit" << endl;
+    cout << "1) Set dfa" << endl;
+    cout << "2) Set nfa" << endl;
+    cout << "3) Test chain" << endl;
+    cout << "4) Print in 5 tuple" << endl;
+    cout << "5) Print in matrix" << endl;
 }
 
 vector<vector<string>> readCSV(int &error, string path)
@@ -95,11 +103,11 @@ vector<vector<string>> readCSV(int &error, string path)
 
     filename = "resources/" + path + filename + ".csv";
 
-    std::ifstream file(filename);
+    ifstream file(filename);
     if (!file.is_open())
     {
         error = -1;
-        vector<vector<string>> s; 
+        vector<vector<string>> s;
         cout << "Can´t find " << path << endl;
         return s;
     }

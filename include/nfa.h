@@ -25,6 +25,9 @@ public:
     void printTuple();
     bool chainValid(string);
     bool testChain(string);
+
+    // Getters
+    set<tuple<string, char, set<string>>> get_delta() const { return this->delta; }
 };
 
 #endif // NFA_H
