@@ -175,49 +175,80 @@ void DFA::nfa2dfa(NFA nfa)
 
     set<string> initialState;
     initialState.insert(q_0);
-    visitedStates.insert(initialState);
+    unvisitedStates.insert(initialState);
 
-    while (!unvisitedStates.empty())
+    set<tuple<set<string>, char, set<string>>> multiTransitions;
+
+    string emptyState = "Q";
+    set<string> empty;
+    empty.insert(emptyState);
+    this->q.insert(emptyState);
+    for (auto const &symbol : this->sigma)
+        multiTransitions.insert(make_tuple(empty, symbol, empty));
+
+    do
     {
-        // Obtenemos todas las transiciones salientes de un estado
+        cout << "Unvisited states: " << unvisitedStates.size() << endl;
         set<string> currentState = *unvisitedStates.begin();
         unvisitedStates.erase(unvisitedStates.begin());
         visitedStates.insert(currentState);
 
-        set<tuple<set<string>, char, set<string>>> multiTransitions;
+        for (auto const &state : currentState)
+        {
+            currentState.erase(state);
+            currentState.insert(trim(state));
+        }
 
-        for (char symbol : this->sigma)
+        for (char symbol : this->sigma) // Se iteran los simbolos
         {
             set<string> nextStates;
 
-            for (auto const &trans : nfa_delta)
+            set<tuple<string, char, set<string>>> transWithExitAndSymbol;
+            for (auto const &trans : nfa_delta) // Se iteran las transiciones
             {
-                const string &fromState = get<0>(trans);
-                char transitionSymbol = get<1>(trans);
-                const set<string> &toStates = get<2>(trans);
-
-                if (currentState.find(fromState) != currentState.end() && symbol == transitionSymbol)
-                    nextStates.insert(toStates.begin(), toStates.end());
-
-                if (!nextStates.empty())
-                {
-                    multiTransitions.insert(make_tuple(currentState, symbol, nextStates));
-
-                    if (visitedStates.find(nextStates) == visitedStates.end())
-                        unvisitedStates.insert(nextStates);
-                }
+                if (currentState.find(get<0>(trans)) != currentState.end() && symbol == get<1>(trans))
+                    transWithExitAndSymbol.insert(trans);
             }
-        }
 
-        // Establecer delta, q y f
-        for (auto const &trans : multiTransitions)
-        {
-            this->delta.insert(make_tuple(setToString(get<0>(trans)), get<1>(trans), setToString(get<2>(trans))));
-            this->q.insert(setToString(get<0>(trans)));
-            this->q.insert(setToString(get<2>(trans)));
-            for (auto &&f : nfa.get_f())
-                if(get<0>(trans).find(f) != get<0>(trans).end())
-                    this->f.insert(setToString(get<0>(trans)));
+            // Se crea la multitransition
+            set<string> exitStates;
+            set<string> arrivalStates;
+            for (auto const &trans : transWithExitAndSymbol)
+            {
+                cout << setToString(get<2>(trans)) << endl;
+                exitStates.insert(get<0>(trans));
+                arrivalStates.insert(get<2>(trans).begin(), get<2>(trans).end());
+
+                // Se añaden a invistedStates
+                if (visitedStates.find(get<2>(trans)) == visitedStates.end())
+                    unvisitedStates.insert(get<2>(trans));
+            }
+            if (arrivalStates.empty())
+                arrivalStates.insert(emptyState);
+
+            multiTransitions.insert(make_tuple(exitStates, symbol, arrivalStates));
+        }
+    } while (!unvisitedStates.empty());
+
+    for (auto const &trans : multiTransitions)
+    {
+        string exitState = setToString(get<0>(trans));
+        string arrivalState = setToString(get<2>(trans));
+        this->delta.insert(make_tuple(exitState, get<1>(trans), arrivalState));
+        this->q.insert(exitState);
+        this->q.insert(arrivalState);
+
+        // Establecer salidas
+        if (get<2>(trans).find("q2") != get<2>(trans).end())
+            this->f.insert(arrivalState);
+    }
+
+    this->q.erase(this->q.find(""));
+    
+    for (auto it = delta.begin(); it != delta.end(); ++it) {
+        if (get<0>(*it) == "") {
+            delta.erase(it);
+            break;  
         }
     }
 }
@@ -226,6 +257,6 @@ string DFA::setToString(set<string> info)
 {
     string name;
     for (auto const &str : info)
-        name += str;
+        name += trim(str);
     return name;
 }

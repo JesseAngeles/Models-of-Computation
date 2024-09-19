@@ -66,7 +66,7 @@ void NFA::setFromTuple(vector<vector<string>> matrix)
         for (auto it = this->delta.begin(); it != this->delta.end(); ++it)
             if (get<0>(*it) == get<0>(data) && get<1>(*it) == get<1>(data))
             {
-                set<string> combinedSet = get<2>(*it);
+                set<string> combinedSet = get<2>(*it);                
                 combinedSet.insert(get<2>(data).begin(), get<2>(data).end());
 
                 this->delta.erase(it);
@@ -79,6 +79,16 @@ void NFA::setFromTuple(vector<vector<string>> matrix)
         if (!registered)
             delta.insert(data);
     }
+
+    for (auto const & state : this->delta)
+    {
+        set<string> final;
+        for (auto const &s : get<2>(state))
+            final.insert(trim(s));
+        this->delta.erase(state);
+        this->delta.insert(make_tuple(get<0>(state), get<1>(state), final));
+    }
+    
 
     // Establece q_0
     if (this->q.find(trim(matrix[3][0])) != this->q.end())
