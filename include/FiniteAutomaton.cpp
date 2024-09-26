@@ -167,6 +167,39 @@ void FiniteAutomaton::printVector(std::vector<std::string> stringVector)
     std::cout << std::endl;
 }
 
+// Resolucion
+bool FiniteAutomaton::isChainValid(std::string chain)
+{
+    for (char const &symbol : chain)
+        if(sigma.find(symbol) == sigma.end())
+            return false;
+
+    return true;
+}
+
+bool FiniteAutomaton::testChain(std::string chain, bool isAccepted, std::string currentState)
+{
+    return false;
+}
+
+// Conversiones
+void FiniteAutomaton::nfa2dfa()
+{
+
+}
+
+std::vector<std::vector<std::string>> FiniteAutomaton::getInTuple()
+{
+    std::vector<std::vector<std::string>> a;
+    return a;
+}
+
+std::vector<std::vector<std::string>> FiniteAutomaton::getInMatrix()
+{
+    std::vector<std::vector<std::string>> a;
+    return a;
+}
+
 // Aditional functions
 bool FiniteAutomaton::is_q_0(std::string &q)
 {

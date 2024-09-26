@@ -19,6 +19,13 @@ int main()
     vector<vector<string>> data = readCSV(error, "nfa");
 
     FiniteAutomaton fa = FiniteAutomaton(data);
+
+    bool flag = false;
+    bool a = fa.testChain("10001");
+
+    cout << a << endl;
+
+    return 0;
 }
 
 // int min()

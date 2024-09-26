@@ -30,6 +30,7 @@ private:
     // Aditiona functions
     std::vector<std::string> splitString(std::string);
     std::string trim(std::string);
+
 public:
     // Constructor
     FiniteAutomaton() = default;
@@ -37,8 +38,17 @@ public:
 
     // Print
     void printTuple();
-    void printMatrix(); 
+    void printMatrix();
     void printVector(std::vector<std::string>);
+
+    // Solution
+    bool isChainValid(std::string);
+    bool testChain(std::string chain, bool isAccepted = false, std::string currentState = "");
+
+    // Conversion
+    void nfa2dfa();
+    std::vector<std::vector<std::string>> getInTuple();
+    std::vector<std::vector<std::string>> getInMatrix();
 
 
     // Getters
