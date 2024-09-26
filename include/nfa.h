@@ -6,8 +6,6 @@
 
 #include "./FiniteAutomaton.h"
 
-using namespace std;
-
 class NFA : public FiniteAutomaton
 {
 private:

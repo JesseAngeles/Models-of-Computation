@@ -3,87 +3,96 @@
 #include <fstream>
 #include <sstream>
 
-#include "../include/dfa.h"
-#include "../include/nfa.h"
+#include "../include/FiniteAutomaton.h"
+
+using namespace std;
 
 void Menu();
 vector<vector<string>> readCSV(int &, string);
 
-void test(DFA &dfa);
-void test(NFA &nfa);
+// void test(DFA &dfa);
+// void test(NFA &nfa);
 
 int main()
 {
-    int option = 0;
-    int currentAutomaton = 0;
-    DFA dfa;
-    NFA nfa;
+    int error;
+    vector<vector<string>> data = readCSV(error, "nfa");
 
-    int error = 0;
-
-    do
-    {
-        error = 0;
-        Menu();
-        if (currentAutomaton == -1)
-            cout << "6) NFA to DFA\n";
-        cin >> option;
-        switch (option)
-        {
-        case 1:
-        {
-            vector<vector<string>> matrix = readCSV(error, "dfa");
-            if (error != 0)
-                continue;
-            dfa = DFA(matrix);
-            currentAutomaton = 1;
-        }
-        break;
-        case 2:
-        {
-            vector<vector<string>> matrix = readCSV(error, "nfa");
-            if (error != 0)
-                continue;
-            nfa = NFA(matrix);
-            currentAutomaton = -1;
-        }
-        break;
-        case 3:
-            if (currentAutomaton == 1)
-                test(dfa);
-            else if (currentAutomaton == -1)
-                test(nfa);
-            else
-                cout << "\nSet automaton before\n";
-            break;
-        case 4:
-            if (currentAutomaton == 1)
-                dfa.printTuple();
-            else if (currentAutomaton == -1)
-                nfa.printTuple();
-            else
-                cout << "\nSet automaton before\n";
-            break;
-        case 5:
-            if (currentAutomaton == 1)
-                dfa.printMatrix();
-            else if (currentAutomaton == -1)
-                nfa.printMatrix();
-            else
-                cout << "\nSet automaton before\n";
-            break;
-        case 6:
-            if (currentAutomaton == -1)
-            {
-                currentAutomaton = 1;
-                dfa.nfa2dfa(nfa);
-            }
-        }
-
-    } while (option);
-
-    return 0;
+    FiniteAutomaton fa = FiniteAutomaton(data);
 }
+
+// int min()
+// {
+//     int option = 0;
+//     int currentAutomaton = 0;
+//     DFA dfa;
+//     NFA nfa;
+
+//     int error = 0;
+
+//     do
+//     {
+//         error = 0;
+//         Menu();
+//         if (currentAutomaton == -1)
+//             cout << "6) NFA to DFA\n";
+//         cin >> option;
+//         switch (option)
+//         {
+//         case 1:
+//         {
+//             vector<vector<string>> matrix = readCSV(error, "dfa");
+//             if (error != 0)
+//                 continue;
+//             dfa = DFA(matrix);
+//             currentAutomaton = 1;
+//         }
+//         break;
+//         case 2:
+//         {
+//             vector<vector<string>> matrix = readCSV(error, "nfa");
+//             if (error != 0)
+//                 continue;
+//             nfa = NFA(matrix);
+//             currentAutomaton = -1;
+//         }
+//         break;
+//         case 3:
+//             if (currentAutomaton == 1)
+//                 test(dfa);
+//             else if (currentAutomaton == -1)
+//                 test(nfa);
+//             else
+//                 cout << "\nSet automaton before\n";
+//             break;
+//         case 4:
+//             if (currentAutomaton == 1)
+//                 dfa.printTuple();
+//             else if (currentAutomaton == -1)
+//                 nfa.printTuple();
+//             else
+//                 cout << "\nSet automaton before\n";
+//             break;
+//         case 5:
+//             if (currentAutomaton == 1)
+//                 dfa.printMatrix();
+//             else if (currentAutomaton == -1)
+//                 nfa.printMatrix();
+//             else
+//                 cout << "\nSet automaton before\n";
+//             break;
+//         case 6:
+//             if (currentAutomaton == -1)
+//             {
+//                 currentAutomaton = 1;
+//                 dfa.nfa2dfa(nfa);
+//             }
+//         }
+
+//     } while (option);
+
+//     return 0;
+// }
 
 void Menu()
 {
@@ -131,45 +140,45 @@ vector<vector<string>> readCSV(int &error, string path)
     return matrix;
 }
 
-void test(DFA &dfa)
-{
-    string word;
-    cout << "Word ('.' for Epsilon): ";
-    cin >> word;
+// void test(DFA &dfa)
+// {
+//     string word;
+//     cout << "Word ('.' for Epsilon): ";
+//     cin >> word;
 
-    if (word == ".")
-        word.clear();
+//     if (word == ".")
+//         word.clear();
 
-    bool valid, status;
+//     bool valid, status;
 
-    if (dfa.chainValid(word))
-    {
-        status = dfa.testChain(word);
-        if (status)
-            cout << "\nChain accepted\n";
-        else
-            cout << "\nChain rejected\n";
-    }
-    else
-        cout << "\nInvalid chain\n";
-}
+//     if (dfa.chainValid(word))
+//     {
+//         status = dfa.testChain(word);
+//         if (status)
+//             cout << "\nChain accepted\n";
+//         else
+//             cout << "\nChain rejected\n";
+//     }
+//     else
+//         cout << "\nInvalid chain\n";
+// }
 
-void test(NFA &nfa)
-{
-    string word;
-    cout << "Word: ";
-    cin >> word;
+// void test(NFA &nfa)
+// {
+//     string word;
+//     cout << "Word: ";
+//     cin >> word;
 
-    bool valid, status;
+//     bool valid, status;
 
-    if (nfa.chainValid(word))
-    {
-        status = nfa.testChain(word);
-        if (status)
-            cout << "\nChain accepted\n";
-        else
-            cout << "\nChain rejected\n";
-    }
-    else
-        cout << "\nInvalid chain\n";
-}
+//     if (nfa.chainValid(word))
+//     {
+//         status = nfa.testChain(word);
+//         if (status)
+//             cout << "\nChain accepted\n";
+//         else
+//             cout << "\nChain rejected\n";
+//     }
+//     else
+//         cout << "\nInvalid chain\n";
+// }
