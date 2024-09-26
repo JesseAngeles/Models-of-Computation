@@ -21,9 +21,6 @@ int main()
     FiniteAutomaton fa = FiniteAutomaton(data);
 
     bool flag = false;
-    bool a = fa.testChain("10001");
-
-    cout << a << endl;
 
     return 0;
 }

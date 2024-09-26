@@ -20,43 +20,45 @@ void FiniteAutomaton::setFromTuple(std::vector<std::vector<std::string>> tuple)
 
     // Establecer sigma
     for (int j = 0; j < tuple[1].size(); j++)
-        sigma.insert(trim(tuple[1][j])[0]);
+        sigma.insert(trim(tuple[1][j]));
 
     // Establecer delta
-
-    std::set<std::tuple<std::string, char, std::set<std::string>>> transitions;
     for (int j = 0; j < tuple[2].size(); j++)
     {
-        std::vector<std::string> newTransition = splitString(tuple[2][j]);
-        printVector(newTransition);
-        bool transitionExists = false;
-        for (auto &transition : transitions)
-        {
-            if (std::get<0>(transition) == newTransition[0] && std::get<1>(transition) == newTransition[1][0])
+        std::vector<std::string> data = splitString(tuple[2][j]);
+
+        std::set<State>::iterator q_0_it = q.find(trim(data[0]));
+        std::set<Symbol>::iterator sigma_it = sigma.find(trim(data[1]));
+        std::set<State>::iterator q_it = q.find(trim(data[2]));
+
+        if (q_0_it == q.end() || sigma_it == sigma.end() || q_it == q.end())
+            return;
+        
+        Transition newTransition(*q_0_it, *sigma_it, {*q_it});
+
+        for (const Transition &transition : delta)
+            if (transition.getExitState() == newTransition.getExitState() && transition.getSymbol() == newTransition.getSymbol())
             {
-                transitions.erase(transition);
-                std::tuple<std::string, char, std::set<std::string>> trans = transition;
-                std::get<2>(trans).insert(newTransition[2]);
-                transitions.insert(trans);
-                transitionExists = true;
+                newTransition.insertArrivalState(transition.getArrivalStates());
+                delta.erase(transition);
                 break;
             }
-        }
 
-        if (!transitionExists)
-        {
-            std::set<std::string> states(newTransition.begin() + 2, newTransition.end());
-            transitions.insert(std::make_tuple(newTransition[0], newTransition[1][0], states));
-        }
+        delta.insert(newTransition);
     }
-    delta = transitions;
 
     // Establecer q_0
-    q_0 = tuple[3][0];
+    std::set<State>::iterator q_it = q.find(trim(tuple[3][0]));
+    if (q_it != q.end())
+        q_0 = *q_it;
 
     // Establecer f
     for (int i = 0; i < tuple[4].size(); i++)
-        f.insert(tuple[4][i]);
+    {
+        std::set<State>::iterator q_it = q.find(trim(tuple[4][i]));
+        if (q_it != q.end())
+            f.insert(*q_it);
+    }
 }
 
 void FiniteAutomaton::setFromMatrix(std::vector<std::vector<std::string>> matrix)
@@ -68,7 +70,7 @@ void FiniteAutomaton::setFromMatrix(std::vector<std::vector<std::string>> matrix
         bool q_0_flag = false;
         bool f_flag = false;
 
-        if (is_q_0(q_current) && q_0.empty())
+        if (is_q_0(q_current) && !q_0)
             q_0_flag = true;
 
         if (is_f(q_current))
@@ -86,21 +88,34 @@ void FiniteAutomaton::setFromMatrix(std::vector<std::vector<std::string>> matrix
 
     // Establecer sigma
     for (int j = 1; j < matrix[0].size(); j++)
-        sigma.insert(trim(matrix[0][j])[0]);
+        sigma.insert(trim(matrix[0][j]));
 
     // Establecer delta
     for (int i = 1; i < matrix.size(); i++)
-    {
         for (int j = 1; j < matrix[i].size(); j++)
         {
-            if(matrix[i][j].empty())
-                continue; 
+            if (matrix[i][j].empty())
+                continue;
+
+            std::set<State> arrivalStates;
             std::vector<std::string> arrivalVector = splitString(matrix[i][j]);
-            std::set<std::string> arrivalSet;
             for (const std::string &arrival : arrivalVector)
-                arrivalSet.insert(trim(arrival));
-            delta.insert(std::make_tuple(trim(matrix[i][0]), trim(matrix[0][j])[0], arrivalSet));
+                arrivalStates.insert(trim(arrival));
+            delta.insert(Transition(trim(matrix[i][0]), matrix[0][j], arrivalStates));
         }
+}
+
+void FiniteAutomaton::setClosures(State &state)
+{
+    std::set<State> arrivalStates;
+    for (const Transition &transition : delta)
+        if (transition.getSymbol().isEpsilon() && transition.getExitState() == state)
+            arrivalStates.insert(transition.getArrivalStates().begin(), transition.getArrivalStates().end());
+
+    for (const State &arrivalState : arrivalStates)
+    {
+        std::shared_ptr<State> state_ptr = std::make_shared<State>(arrivalState);
+        state.insertClosure(state_ptr);
     }
 }
 
@@ -109,26 +124,26 @@ void FiniteAutomaton::printTuple()
 {
     std::cout << "\nStates(q): ";
     for (auto const &state : q)
-        std::cout << state << ". ";
+        std::cout << state.getName() << ". ";
 
     std::cout << "\nAlphabet(sigma): ";
     for (auto const &symbol : sigma)
-        std::cout << symbol << ". ";
+        std::cout << symbol.getName() << ". ";
 
     std::cout << "\nTransitions (delta): \n\t";
     for (auto const &transition : delta)
     {
-        std::cout << std::get<0>(transition) << "(" << std::get<1>(transition) << ") -> { ";
-        for (const auto &delta : std::get<2>(transition))
-            std::cout << delta << " ";
+        std::cout << transition.getExitState().getName() << "(" << transition.getSymbol().getName() << ") -> { ";
+        for (const auto &delta : transition.getArrivalStates())
+            std::cout << delta.getName() << " ";
         std::cout << "}\n\t";
     }
 
-    std::cout << "\nStart state (q_0): " << q_0;
+    std::cout << "\nStart state (q_0): " << q_0.getName();
 
     std::cout << "\nFinal states (F): ";
     for (auto const &state : f)
-        std::cout << state << ". ";
+        std::cout << state.getName() << ". ";
 
     std::cout << std::endl;
 }
@@ -136,7 +151,7 @@ void FiniteAutomaton::printTuple()
 void FiniteAutomaton::printMatrix()
 {
     for (auto const &symbol : this->sigma)
-        std::cout << "\t" << symbol;
+        std::cout << "\t" << symbol.getName();
 
     std::cout << std::endl;
 
@@ -146,46 +161,40 @@ void FiniteAutomaton::printMatrix()
             std::cout << "-";
         if (this->f.find(state) != this->f.end())
             std::cout << "*";
-        std::cout << state << "\t";
+        std::cout << state.getName() << "\t";
         for (auto const &symbol : this->sigma)
         {
             std::cout << "{ ";
             for (auto const &transition : this->delta)
-                if (std::get<0>(transition) == state && std::get<1>(transition) == symbol)
-                    for (const auto &delta : std::get<2>(transition))
-                        std::cout << delta << " ";
+                if (transition.getExitState() == state && transition.getSymbol() == symbol)
+                    for (const auto &delta : transition.getArrivalStates())
+                        std::cout << delta.getName() << " ";
             std::cout << "}\t";
         }
         std::cout << std::endl;
     }
 }
 
-void FiniteAutomaton::printVector(std::vector<std::string> stringVector)
+// TODO Solution
+bool FiniteAutomaton::findEpsilonCicle()
 {
-    for (const std::string &item : stringVector)
-        std::cout << item << "  ";
-    std::cout << std::endl;
-}
+    // Obtenemos todos los delta que contengan epsilon
+    std::set<Transition> deltaEpsilon;
+    for (const Transition &transition : delta)
+        if (transition.getSymbol().isEpsilon())
+            deltaEpsilon.insert(transition);
 
-// Resolucion
-bool FiniteAutomaton::isChainValid(std::string chain)
-{
-    for (char const &symbol : chain)
-        if(sigma.find(symbol) == sigma.end())
-            return false;
+    State currentState;
+    for (const Transition &transition : deltaEpsilon)
+    {
+    }
 
-    return true;
-}
-
-bool FiniteAutomaton::testChain(std::string chain, bool isAccepted, std::string currentState)
-{
     return false;
 }
 
 // Conversiones
 void FiniteAutomaton::nfa2dfa()
 {
-
 }
 
 std::vector<std::vector<std::string>> FiniteAutomaton::getInTuple()

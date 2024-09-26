@@ -8,20 +8,24 @@
 #include <string>
 #include <sstream>
 
+#include "State.h"
+#include "Symbol.h"
+#include "Transition.h"
+
 class FiniteAutomaton
 {
 private:
     // Variables
-    std::set<std::string> q;
-    std::set<char> sigma;
-    std::set<std::tuple<std::string, char, std::set<std::string>>> delta;
-    std::string q_0;
-    std::set<std::string> f;
-    bool init = false;
+    std::set<State> q;
+    std::set<Symbol> sigma;
+    std::set<Transition> delta;
+    State q_0;
+    std::set<State> f;
 
     // Asignacion
     void setFromTuple(std::vector<std::vector<std::string>>);
     void setFromMatrix(std::vector<std::vector<std::string>>);
+    void setClosures(State &);
 
     // Identify initial and final states
     bool is_q_0(std::string &);
@@ -39,24 +43,21 @@ public:
     // Print
     void printTuple();
     void printMatrix();
-    void printVector(std::vector<std::string>);
 
     // Solution
-    bool isChainValid(std::string);
-    bool testChain(std::string chain, bool isAccepted = false, std::string currentState = "");
+    bool findEpsilonCicle();
 
     // Conversion
     void nfa2dfa();
     std::vector<std::vector<std::string>> getInTuple();
     std::vector<std::vector<std::string>> getInMatrix();
 
-
     // Getters
-    std::set<std::string> get_q() const { return this->q; }
-    std::set<char> get_sigma() const { return this->sigma; }
-    std::set<std::tuple<std::string, char, std::set<std::string>>> get_delta() const { return this->delta; }
-    std::string get_q_0() const { return this->q_0; }
-    std::set<std::string> get_f() const { return this->f; }
+    std::set<State> get_q() const { return q; }
+    std::set<Symbol> get_sigma() const { return sigma; }
+    std::set<Transition> get_delta() const { return delta; }
+    State get_q_0() const { return q_0; }
+    std::set<State> get_f() const { return f; }
 };
 
 #endif // FINITE_AUTOMATON_H
