@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <set>
+#include <memory>
 
 #include "State.h"
 #include "Symbol.h"
@@ -10,23 +11,22 @@
 class Transition
 {
 public:
-    Transition() = default;
-    Transition(State exitState, Symbol symbol, std::set<State> arrivalStates)
+    Transition(std::shared_ptr<State> exitState, std::shared_ptr<Symbol> symbol, std::set<std::shared_ptr<State>> arrivalStates)
         : exitState(exitState), symbol(symbol), arrivalStates(arrivalStates) {}
 
     // Getters
-    State getExitState() const { return exitState; }
-    Symbol getSymbol() const { return symbol; }
-    std::set<State> getArrivalStates() const { return arrivalStates; }
+    std::shared_ptr<State> getExitState() const { return exitState; }
+    std::shared_ptr<Symbol> getSymbol() const { return symbol; }
+    std::set<std::shared_ptr<State>> &getArrivalStates() { return arrivalStates; }
 
     // Setters
-    void setExitState(State exitState) { this->exitState = exitState; }
+    void setExitState(std::shared_ptr<State> exitState) { this->exitState = exitState; }
+    void setArrivalStates(std::set<std::shared_ptr<State>> arrivalState) { this->arrivalStates = arrivalState; }
 
     // Insert
-    void insertArrivalState(std::set<State> states) { arrivalStates.insert(states.begin(), states.end()); }
+    void insertArrivalState(std::shared_ptr<State> state) { arrivalStates.insert(state); }
 
-    void setArrivalStates(std::set<State> arrivalState) { this->arrivalStates = arrivalState; }
-
+    // Sobrecarga del operador <
     bool operator<(const Transition &other) const
     {
         if (exitState == other.exitState)
@@ -39,9 +39,9 @@ public:
     }
 
 private:
-    State exitState;
-    Symbol symbol;
-    std::set<State> arrivalStates;
+    std::shared_ptr<State> exitState;
+    std::shared_ptr<Symbol> symbol;
+    std::set<std::shared_ptr<State>> arrivalStates;
 };
 
 #endif // TRANSITION_H

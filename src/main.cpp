@@ -1,5 +1,4 @@
 #include <iostream>
-#include <iostream>
 #include <fstream>
 #include <sstream>
 
@@ -21,6 +20,8 @@ int main()
     FiniteAutomaton fa = FiniteAutomaton(data);
 
     bool flag = false;
+
+    fa.printStates();
 
     return 0;
 }

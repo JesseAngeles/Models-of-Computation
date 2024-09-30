@@ -16,16 +16,16 @@ class FiniteAutomaton
 {
 private:
     // Variables
-    std::set<State> q;
-    std::set<Symbol> sigma;
-    std::set<Transition> delta;
-    State q_0;
-    std::set<State> f;
+    std::set<std::shared_ptr<State>> q;
+    std::set<std::shared_ptr<Symbol>> sigma;
+    std::set<std::shared_ptr<Transition>> delta;
+    std::shared_ptr<State> q_0;
+    std::set<std::shared_ptr<State>> f;
 
     // Asignacion
     void setFromTuple(std::vector<std::vector<std::string>>);
     void setFromMatrix(std::vector<std::vector<std::string>>);
-    void setClosures(State &);
+    void setClosure(std::shared_ptr<Transition> transition);
 
     // Identify initial and final states
     bool is_q_0(std::string &);
@@ -43,9 +43,10 @@ public:
     // Print
     void printTuple();
     void printMatrix();
+    void printStates();
+    void printTransitions();
 
     // Solution
-    bool findEpsilonCicle();
 
     // Conversion
     void nfa2dfa();
@@ -53,11 +54,11 @@ public:
     std::vector<std::vector<std::string>> getInMatrix();
 
     // Getters
-    std::set<State> get_q() const { return q; }
-    std::set<Symbol> get_sigma() const { return sigma; }
-    std::set<Transition> get_delta() const { return delta; }
-    State get_q_0() const { return q_0; }
-    std::set<State> get_f() const { return f; }
+    std::set<std::shared_ptr<State>> get_q() const { return q; }
+    std::set<std::shared_ptr<Symbol>> get_sigma() const { return sigma; }
+    std::set<std::shared_ptr<Transition>> get_delta() const { return delta; }
+    std::shared_ptr<State> get_q_0() const { return q_0; }
+    std::set<std::shared_ptr<State>> get_f() const { return f; }
 };
 
 #endif // FINITE_AUTOMATON_H
