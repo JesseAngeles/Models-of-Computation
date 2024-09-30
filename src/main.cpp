@@ -6,107 +6,77 @@
 
 using namespace std;
 
-void Menu();
+int Menu();
 vector<vector<string>> readCSV(int &, string);
-
-// void test(DFA &dfa);
-// void test(NFA &nfa);
+std::vector<std::string> chainSplit(std::string word);
+void testChain(std::shared_ptr<FiniteAutomaton>);
 
 int main()
 {
-    int error;
+    int option, error = 0;
+    std::shared_ptr<FiniteAutomaton> automaton = nullptr;
+
+    do
+    {
+        option = Menu();
+        switch (option)
+        {
+        case 1:
+            automaton = std::make_shared<FiniteAutomaton>(readCSV(error, "nfa"));
+            break;
+        case 2:
+            if (automaton != nullptr)
+                testChain(automaton);
+            break;
+        case 3:
+            if (automaton != nullptr)
+                automaton->printMatrix();
+            break;
+        case 4:
+            if (automaton != nullptr)
+                automaton->printTuple();
+            break;
+        case 5:
+            if (automaton != nullptr)
+                automaton->printStates();
+            break;
+        }
+    } while (option);
+
     vector<vector<string>> data = readCSV(error, "nfa");
 
     FiniteAutomaton fa = FiniteAutomaton(data);
 
-    bool flag = false;
+    fa.printMatrix();
 
-    fa.printStates();
+    std::cout << fa.testChain(chainSplit("01")) << std::endl;
 
     return 0;
 }
 
-// int min()
-// {
-//     int option = 0;
-//     int currentAutomaton = 0;
-//     DFA dfa;
-//     NFA nfa;
-
-//     int error = 0;
-
-//     do
-//     {
-//         error = 0;
-//         Menu();
-//         if (currentAutomaton == -1)
-//             cout << "6) NFA to DFA\n";
-//         cin >> option;
-//         switch (option)
-//         {
-//         case 1:
-//         {
-//             vector<vector<string>> matrix = readCSV(error, "dfa");
-//             if (error != 0)
-//                 continue;
-//             dfa = DFA(matrix);
-//             currentAutomaton = 1;
-//         }
-//         break;
-//         case 2:
-//         {
-//             vector<vector<string>> matrix = readCSV(error, "nfa");
-//             if (error != 0)
-//                 continue;
-//             nfa = NFA(matrix);
-//             currentAutomaton = -1;
-//         }
-//         break;
-//         case 3:
-//             if (currentAutomaton == 1)
-//                 test(dfa);
-//             else if (currentAutomaton == -1)
-//                 test(nfa);
-//             else
-//                 cout << "\nSet automaton before\n";
-//             break;
-//         case 4:
-//             if (currentAutomaton == 1)
-//                 dfa.printTuple();
-//             else if (currentAutomaton == -1)
-//                 nfa.printTuple();
-//             else
-//                 cout << "\nSet automaton before\n";
-//             break;
-//         case 5:
-//             if (currentAutomaton == 1)
-//                 dfa.printMatrix();
-//             else if (currentAutomaton == -1)
-//                 nfa.printMatrix();
-//             else
-//                 cout << "\nSet automaton before\n";
-//             break;
-//         case 6:
-//             if (currentAutomaton == -1)
-//             {
-//                 currentAutomaton = 1;
-//                 dfa.nfa2dfa(nfa);
-//             }
-//         }
-
-//     } while (option);
-
-//     return 0;
-// }
-
-void Menu()
+std::vector<std::string> chainSplit(std::string word)
 {
-    cout << "0) Exit" << endl;
-    cout << "1) Set dfa" << endl;
-    cout << "2) Set nfa" << endl;
-    cout << "3) Test chain" << endl;
-    cout << "4) Print in 5 tuple" << endl;
-    cout << "5) Print in matrix" << endl;
+    std::vector<std::string> result;
+
+    for (char c : word)
+        result.push_back(std::string(1, c));
+    return result;
+}
+
+int Menu()
+{
+    int option;
+    do
+    {
+        cout << "0) Exit" << endl;
+        cout << "1) Set Automaton" << endl;
+        cout << "2) Test Chain" << endl;
+        cout << "3) Print in Matrix" << endl;
+        cout << "4) Print in 5 Tuple" << endl;
+        cout << "5) Print closures" << endl;
+        cin >> option;
+    } while (option < 0 && option > 5);
+    return option;
 }
 
 vector<vector<string>> readCSV(int &error, string path)
@@ -145,45 +115,22 @@ vector<vector<string>> readCSV(int &error, string path)
     return matrix;
 }
 
-// void test(DFA &dfa)
-// {
-//     string word;
-//     cout << "Word ('.' for Epsilon): ";
-//     cin >> word;
+void testChain(std::shared_ptr<FiniteAutomaton> automaton)
+{
+    string chain = "";
+ 
+    cout << "E for empty chain: ";
+    cin >> chain;
 
-//     if (word == ".")
-//         word.clear();
+    if(chain == "E")
+        chain = "";
 
-//     bool valid, status;
-
-//     if (dfa.chainValid(word))
-//     {
-//         status = dfa.testChain(word);
-//         if (status)
-//             cout << "\nChain accepted\n";
-//         else
-//             cout << "\nChain rejected\n";
-//     }
-//     else
-//         cout << "\nInvalid chain\n";
-// }
-
-// void test(NFA &nfa)
-// {
-//     string word;
-//     cout << "Word: ";
-//     cin >> word;
-
-//     bool valid, status;
-
-//     if (nfa.chainValid(word))
-//     {
-//         status = nfa.testChain(word);
-//         if (status)
-//             cout << "\nChain accepted\n";
-//         else
-//             cout << "\nChain rejected\n";
-//     }
-//     else
-//         cout << "\nInvalid chain\n";
-// }
+    vector<string> chains = chainSplit(chain);
+    if (automaton->isChainValid(chains))
+        if (automaton->testChain(chains))
+            cout << "chain accepted" << endl;
+        else
+            cout << "chain rejected" << endl;
+    else
+        cout << "chain invalid" << endl;
+}

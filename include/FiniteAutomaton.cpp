@@ -1,12 +1,11 @@
 #include "FiniteAutomaton.h"
 
-FiniteAutomaton::FiniteAutomaton(std::vector<std::vector<std::string>> &af)
+FiniteAutomaton::FiniteAutomaton(const std::vector<std::vector<std::string>> &af)
 {
     if (af[0][0] == "t")
         setFromTuple(af);
     else
         setFromMatrix(af);
-
 
     // Establecer la clausura
     std::set<std::shared_ptr<Transition>> delta_epsilon;
@@ -26,9 +25,6 @@ FiniteAutomaton::FiniteAutomaton(std::vector<std::vector<std::string>> &af)
     // Establecer la clausuara de los estados sin transiciones con epsilon (q_0[E] -> q_1)
     for (const std::shared_ptr<Transition> &transition : delta_epsilon)
         setClosure(transition);
-
-    printTuple();
-    printMatrix();
 }
 
 // Establecer los valores
@@ -223,20 +219,16 @@ void FiniteAutomaton::setClosure(std::shared_ptr<Transition> transition)
 
         // Buscamos todas las transiciones cuyo estado de salida sea el estado de llegada actual
         for (const std::shared_ptr<Transition> &trans : delta) // Uso de una variable diferente "trans" para evitar confusión
-        {
             if (trans->getExitState() == arrival && trans->getSymbol()->isEpsilon())
             {
                 // Llamada recursiva para calcular la clausura del estado de llegada
                 setClosure(trans);
                 break;
             }
-        }
 
         // Después de calcular la clausura del estado de llegada, añadimos todos los estados de su clausura
         for (const std::shared_ptr<State> &closure_state : arrival->getClosure())
-        {
             exitState->insertClosure(closure_state);
-        }
     }
 }
 
@@ -303,11 +295,62 @@ void FiniteAutomaton::printStates()
 {
     for (const std::shared_ptr<State> &state : q)
     {
-        std::cout << state->getName() << ": ";
+        std::cout << "CLO(" << state->getName() << "): " << state->getName() << " ";
         for (const std::shared_ptr<State> &closure : state->getClosure())
             std::cout << closure->getName() << " ";
         std::cout << std::endl;
     }
+}
+
+// Solution
+bool FiniteAutomaton::isChainValid(std::vector<std::string> chain)
+{
+    for (const std::string &letter : chain)
+    {
+        if (letter == "E")
+            return false;
+
+        bool isInSigma = false;
+        for (const std::shared_ptr<Symbol> &symbol : sigma)
+            if (symbol->getName() == letter)
+                isInSigma = true;
+
+        if (!isInSigma)
+            return false;
+    }
+
+    return true;
+}
+
+bool FiniteAutomaton::testChain(std::vector<std::string> chain, bool final, std::shared_ptr<State> currentState)
+{
+    if (currentState == nullptr)
+        currentState = q_0;
+
+    if (final)
+        return final;
+
+    // Paso recursivo para las transiciones con epsilon
+    if (!currentState->getClosure().empty())
+        for (const std::shared_ptr<State> &epsilonState : currentState->getClosure())
+            if (testChain(chain, final, epsilonState))
+                return true;
+
+    if (chain.empty())
+        if (f.find(currentState) != f.end())
+            return true;
+        else
+            return false;
+
+    // Paso recursivo para las transiciones directas
+    for (const std::shared_ptr<Transition> &transition : delta)
+        if (transition->getExitState() == currentState && transition->getSymbol()->getName() == chain[0])
+            // Iterar sobre los estados de llegada (arrival States)
+            for (const std::shared_ptr<State> &arrival : transition->getArrivalStates())
+                if (testChain(std::vector<std::string>(chain.begin() + 1, chain.end()), final, arrival))
+                    return true; // Si alguna transición acepta la cadena, retornar true
+
+    return false;
 }
 
 // Conversiones

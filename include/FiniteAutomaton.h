@@ -38,15 +38,16 @@ private:
 public:
     // Constructor
     FiniteAutomaton() = default;
-    FiniteAutomaton(std::vector<std::vector<std::string>> &);
+    FiniteAutomaton(const std::vector<std::vector<std::string>> &);
 
     // Print
     void printTuple();
     void printMatrix();
     void printStates();
-    void printTransitions();
 
     // Solution
+    bool isChainValid(std::vector<std::string> chain);
+    bool testChain(std::vector<std::string> chain, bool final = false, std::shared_ptr<State> currentState = nullptr);
 
     // Conversion
     void nfa2dfa();
