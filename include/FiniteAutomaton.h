@@ -22,7 +22,9 @@ private:
     std::shared_ptr<State> q_0;
     std::set<std::shared_ptr<State>> f;
 
-    // Asignacion
+    std::string type;
+
+    // Asignation
     void setFromTuple(std::vector<std::vector<std::string>>);
     void setFromMatrix(std::vector<std::vector<std::string>>);
     void setClosure(std::shared_ptr<Transition> transition);
@@ -34,6 +36,7 @@ private:
     // Aditiona functions
     std::vector<std::string> splitString(std::string);
     std::string trim(std::string);
+    bool findCycle(std::shared_ptr<State> initialState, std::shared_ptr<State> currentState);
 
 public:
     // Constructor
@@ -50,7 +53,10 @@ public:
     bool testChain(std::vector<std::string> chain, bool final = false, std::shared_ptr<State> currentState = nullptr);
 
     // Conversion
+    void nfae2nfa();
     void nfa2dfa();
+    std::shared_ptr<State> closure2state(std::shared_ptr<State>);
+    std::shared_ptr<State> set2State(std::set<std::shared_ptr<State>>);
     std::vector<std::vector<std::string>> getInTuple();
     std::vector<std::vector<std::string>> getInMatrix();
 
@@ -60,6 +66,8 @@ public:
     std::set<std::shared_ptr<Transition>> get_delta() const { return delta; }
     std::shared_ptr<State> get_q_0() const { return q_0; }
     std::set<std::shared_ptr<State>> get_f() const { return f; }
+
+    std::string getType() const { return type; }
 };
 
 #endif // FINITE_AUTOMATON_H

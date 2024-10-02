@@ -25,6 +25,14 @@ FiniteAutomaton::FiniteAutomaton(const std::vector<std::vector<std::string>> &af
     // Establecer la clausuara de los estados sin transiciones con epsilon (q_0[E] -> q_1)
     for (const std::shared_ptr<Transition> &transition : delta_epsilon)
         setClosure(transition);
+
+    // Establecer el tipo
+    type = "dfa";
+    for (const std::shared_ptr<Transition> &transition : delta)
+        if (transition->getSymbol()->isEpsilon())
+            type = "nfae";
+        else if (transition->getArrivalStates().size() > 1)
+            type = "nfa";
 }
 
 // Establecer los valores
@@ -83,7 +91,7 @@ void FiniteAutomaton::setFromTuple(std::vector<std::vector<std::string>> tuple)
         for (const std::shared_ptr<Transition> &transition : delta)
             if (transition->getExitState() == q_exit_ptr && transition->getSymbol() == sigma_q_ptr)
             {
-                auto &arrivalStates = transition->getArrivalStates();
+                std::set<std::shared_ptr<State>> &arrivalStates = transition->getArrivalStates();
                 arrivalStates.insert(q_arrival_ptr);
                 transitionExists = true;
                 break;
@@ -236,20 +244,19 @@ void FiniteAutomaton::setClosure(std::shared_ptr<Transition> transition)
 void FiniteAutomaton::printTuple()
 {
     std::cout << "\nStates(q): ";
-    for (auto const &state : q)
+    for (std::shared_ptr<State> const &state : q)
         std::cout << state->getName() << " ";
 
     std::cout << "\nAlphabet(sigma): ";
-    for (auto const &symbol : sigma)
+    for (std::shared_ptr<Symbol> const &symbol : sigma)
         std::cout << symbol->getName() << " ";
 
     std::cout << "\nTransitions (delta): \n\t";
-    for (auto const &transition : delta)
+    for (std::shared_ptr<Transition> const &transition : delta)
     {
 
         std::cout << transition->getExitState()->getName() << "(" << transition->getSymbol()->getName() << ") -> { ";
-        const auto &arrivalStates = transition->getArrivalStates();
-        for (const auto &delta : transition->getArrivalStates())
+        for (const std::shared_ptr<State> &delta : transition->getArrivalStates())
             std::cout << delta->getName() << " ";
         std::cout << "}\n\t";
     }
@@ -257,7 +264,7 @@ void FiniteAutomaton::printTuple()
     std::cout << "\nStart state (q_0): " << q_0->getName();
 
     std::cout << "\nFinal states (F): ";
-    for (auto const &state : f)
+    for (std::shared_ptr<State> const &state : f)
         std::cout << state->getName() << " ";
 
     std::cout << std::endl;
@@ -265,7 +272,7 @@ void FiniteAutomaton::printTuple()
 
 void FiniteAutomaton::printMatrix()
 {
-    for (auto const &symbol : this->sigma)
+    for (std::shared_ptr<Symbol> const &symbol : this->sigma)
         std::cout << "\t" << symbol->getName();
 
     std::cout << std::endl;
@@ -278,12 +285,12 @@ void FiniteAutomaton::printMatrix()
         if (this->f.find(state) != this->f.end())
             std::cout << "*";
         std::cout << state->getName() << "\t";
-        for (auto const &symbol : this->sigma)
+        for (std::shared_ptr<Symbol> const &symbol : this->sigma)
         {
             std::cout << "{ ";
-            for (auto const &transition : this->delta)
+            for (std::shared_ptr<Transition> const &transition : this->delta)
                 if (transition->getExitState() == state && transition->getSymbol() == symbol)
-                    for (const auto &delta : transition->getArrivalStates())
+                    for (const std::shared_ptr<State> &delta : transition->getArrivalStates())
                         std::cout << delta->getName() << " ";
             std::cout << "}\t";
         }
@@ -340,7 +347,14 @@ bool FiniteAutomaton::testChain(std::vector<std::string> chain, bool final, std:
         if (f.find(currentState) != f.end())
             return true;
         else
+        {
+            printStates();
+            for (const std::shared_ptr<State> &closure : currentState->getClosure())
+                if (f.find(closure) != f.end())
+                    return true;
+
             return false;
+        }
 
     // Paso recursivo para las transiciones directas
     for (const std::shared_ptr<Transition> &transition : delta)
@@ -354,8 +368,184 @@ bool FiniteAutomaton::testChain(std::vector<std::string> chain, bool final, std:
 }
 
 // Conversiones
+void FiniteAutomaton::nfae2nfa()
+{
+    // Seleccionamos las transiciones y estados que contienen a Epsilon
+    std::set<std::shared_ptr<Transition>> delta_epsilon;
+    for (const std::shared_ptr<Transition> &transition : delta)
+        if (transition->getSymbol()->isEpsilon())
+            delta_epsilon.insert(transition);
+
+    // Se itera sobre las transiciones con epsilon
+    for (const std::shared_ptr<Transition> &transition : delta_epsilon)
+    {
+        delta.erase(transition);
+
+        // Se crea un nuevo estado, que es: q_i U CLO(q_i)
+        std::shared_ptr<State> newState = closure2state(transition->getExitState());
+        std::set<std::shared_ptr<State>> completeClosure = transition->getExitState()->getClosure();
+        completeClosure.insert(transition->getExitState());
+
+        // Iteramos sobre los simbolos
+        for (const std::shared_ptr<Symbol> &symbol : sigma)
+        {
+            if (symbol->isEpsilon())
+                continue;
+
+            // Nuevo arrival States
+            std::set<std::shared_ptr<State>> newArrivalStates;
+
+            // Iteramos sobre los estados
+            for (const std::shared_ptr<State> &closure : completeClosure)
+            {
+                // Buscamos si existe una transicion con existaState = closure & symbol = symbol
+                for (const std::shared_ptr<Transition> &trans : delta)
+                    if (trans->getExitState() == closure && trans->getSymbol() == symbol)
+                    {
+                        newArrivalStates.insert(trans->getArrivalStates().begin(), trans->getArrivalStates().end());
+                        break;
+                    }
+
+                // Buscamos si algun estado pertenece en f
+                if (f.find(closure) != f.end())
+                    f.insert(newState);
+            }
+
+            // Creamos la nueva transición
+            std::shared_ptr<Transition> transition_ptr = std::make_shared<Transition>(Transition(newState, symbol, newArrivalStates));
+            delta.insert(transition_ptr);
+        }
+
+        // Intercambiamos los arrival states
+        for (const std::shared_ptr<Transition> &trans : delta)
+            for (const std::shared_ptr<State> &arrival : trans->getArrivalStates())
+                if (arrival == transition->getExitState())
+                {
+                    trans->getArrivalStates().erase(arrival);
+                    trans->getArrivalStates().insert(newState);
+                }
+
+        // Insertamos el estado en q
+        q.insert(newState);
+        if (q_0 == transition->getExitState())
+            q_0 = newState;
+        q.erase(transition->getExitState());
+    }
+
+    // Eliminar Epsilon
+    for (std::set<std::shared_ptr<Symbol>>::iterator it = sigma.begin(); it != sigma.end();)
+        if ((*it)->isEpsilon())
+            it = sigma.erase(it);
+        else
+            ++it;
+
+    type = "nfa";
+}
+
 void FiniteAutomaton::nfa2dfa()
 {
+    std::set<std::pair<std::shared_ptr<State>, std::set<std::shared_ptr<State>>>> visitedStates;
+    std::set<std::pair<std::shared_ptr<State>, std::set<std::shared_ptr<State>>>> unvisitedStates;
+
+    std::set<std::shared_ptr<Transition>> transitions;
+
+    // Estado emptySet
+    std::shared_ptr<State> emptySet = std::make_shared<State>(State("0"));
+    std::set<std::shared_ptr<Transition>> emptyTransition;
+    emptySet->setIsClosureSet(true);
+    for (const std::shared_ptr<Symbol> &symbol : sigma)
+        emptyTransition.insert(std::make_shared<Transition>(Transition(emptySet, symbol, {emptySet})));
+
+    // Primer estado
+    std::set<std::shared_ptr<State>> q_0_set;
+    q_0_set.insert(q_0);
+    unvisitedStates.insert(std::make_pair(q_0, q_0_set));
+
+    // Mientras haya estados no visitados
+    while (!unvisitedStates.empty())
+    {
+        std::pair<std::shared_ptr<State>, std::set<std::shared_ptr<State>>> currentState;
+        currentState = *unvisitedStates.begin();
+        unvisitedStates.erase(currentState);
+        visitedStates.insert(currentState);
+
+        // Iterar sobre los simbolos
+        for (const std::shared_ptr<Symbol> &symbol : sigma)
+        {
+            // Acumular los arrivalStates
+            std::pair<std::shared_ptr<State>, std::set<std::shared_ptr<State>>> arrivalState;
+
+            // Iterar sobre los elementos del currentState
+            for (const std::shared_ptr<State> &exitState : currentState.second)
+                // Encontrar todos los arrivalStates de la transiciones y añadir a arrivalStates
+                for (const std::shared_ptr<Transition> &trans : delta)
+                    if (trans->getExitState() == exitState && trans->getSymbol() == symbol)
+                        arrivalState.second.insert(trans->getArrivalStates().begin(), trans->getArrivalStates().end());
+
+            std::shared_ptr<Transition> transition_ptr;
+            if (arrivalState.second.empty())
+                arrivalState.first = emptySet;
+            else if (arrivalState.second.size() == 1)
+                arrivalState.first = *arrivalState.second.begin();
+            else
+            {
+                arrivalState.first = set2State(arrivalState.second);
+                // Buscamos si el estado ya existe en los visited states por nombre
+                for (const std::pair<std::shared_ptr<State>, std::set<std::shared_ptr<State>>> &visitedState : visitedStates)
+                    if (visitedState.first->getName() == arrivalState.first->getName())
+                        arrivalState.first = visitedState.first;
+            }
+
+            transition_ptr = std::make_shared<Transition>(Transition(currentState.first, symbol, {arrivalState.first}));
+
+            bool isFinalState = false;
+            for (const std::shared_ptr<State> &arrival : arrivalState.second)
+                if (f.find(arrival) != f.end())
+                    isFinalState = true;
+
+            if (isFinalState)
+                f.insert(arrivalState.first);
+
+            if (visitedStates.find(arrivalState) == visitedStates.end())
+                unvisitedStates.insert(arrivalState);
+
+            transitions.insert(transition_ptr);
+        }
+    }
+
+    std::set<std::shared_ptr<State>> new_q;
+    for (const std::pair<std::shared_ptr<State>, std::set<std::shared_ptr<State>>> &state : visitedStates)
+        new_q.insert(state.first);
+
+    q = new_q;
+    q.insert(emptySet);
+    delta = transitions;
+    delta.insert(emptyTransition.begin(), emptyTransition.end());
+
+    type = "dfa";
+}
+
+std::shared_ptr<State> FiniteAutomaton::closure2state(std::shared_ptr<State> state)
+{
+    std::string name = state->getName();
+    for (const std::shared_ptr<State> &closure : state->getClosure())
+        name += closure->getName();
+
+    std::shared_ptr<State> state_ptr = std::make_shared<State>(State(name));
+    state_ptr->setIsClosureSet(true);
+
+    return state_ptr;
+}
+
+std::shared_ptr<State> FiniteAutomaton::set2State(std::set<std::shared_ptr<State>> states)
+{
+    std::string name;
+    for (const std::shared_ptr<State> &state : states)
+        name += state->getName();
+    std::shared_ptr<State> state_ptr = std::make_shared<State>(State(name));
+    state_ptr->setIsClosureSet(true);
+
+    return state_ptr;
 }
 
 std::vector<std::vector<std::string>> FiniteAutomaton::getInTuple()

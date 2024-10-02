@@ -4,9 +4,10 @@
 
 #include "../include/FiniteAutomaton.h"
 
+#define divisor "*************************"
+
 using namespace std;
 
-int Menu();
 vector<vector<string>> readCSV(int &, string);
 std::vector<std::string> chainSplit(std::string word);
 void testChain(std::shared_ptr<FiniteAutomaton>);
@@ -18,12 +19,36 @@ int main()
 
     do
     {
-        option = Menu();
+        cout << divisor << endl;
+        cout << "0) Exit" << endl;
+        cout << "1) Set Automaton" << endl;
+        if (automaton != nullptr)
+        {
+            cout << "2) Test Chain" << endl;
+            cout << "3) Print in Matrix" << endl;
+            cout << "4) Print in 5 Tuple" << endl;
+
+            if (automaton->getType() == "nfae")
+            {
+                cout << "5) NFA-E to NFA" << endl;
+                cout << "6) NFA-E to DFA" << endl;
+            }
+            else if (automaton->getType() == "nfa")
+                cout << "7) NFA to DFA" << endl;
+        }
+
+        cin >> option;
         switch (option)
         {
-        case 1:
-            automaton = std::make_shared<FiniteAutomaton>(readCSV(error, "nfa"));
+        case 0:
+            "bye";
             break;
+        case 1:
+        {
+            automaton = std::make_shared<FiniteAutomaton>(readCSV(error, "nfa"));
+            automaton->printStates();
+        }
+        break;
         case 2:
             if (automaton != nullptr)
                 testChain(automaton);
@@ -38,7 +63,17 @@ int main()
             break;
         case 5:
             if (automaton != nullptr)
-                automaton->printStates();
+                if (automaton->getType() == "nfae")
+                    automaton->nfae2nfa();
+                else if (automaton->getType() == "nfa")
+                    automaton->nfa2dfa();
+            break;
+        case 6:
+            if (automaton != nullptr && automaton->getType() == "nfae")
+            {
+                automaton->nfae2nfa();
+                automaton->nfa2dfa();
+            }
             break;
         }
     } while (option);
@@ -63,26 +98,10 @@ std::vector<std::string> chainSplit(std::string word)
     return result;
 }
 
-int Menu()
-{
-    int option;
-    do
-    {
-        cout << "0) Exit" << endl;
-        cout << "1) Set Automaton" << endl;
-        cout << "2) Test Chain" << endl;
-        cout << "3) Print in Matrix" << endl;
-        cout << "4) Print in 5 Tuple" << endl;
-        cout << "5) Print closures" << endl;
-        cin >> option;
-    } while (option < 0 && option > 5);
-    return option;
-}
-
 vector<vector<string>> readCSV(int &error, string path)
 {
     string filename;
-    cout << "Filename number: ";
+    cout << "Filename: ";
     cin >> filename;
 
     filename = "resources/" + path + filename + ".csv";
@@ -118,19 +137,19 @@ vector<vector<string>> readCSV(int &error, string path)
 void testChain(std::shared_ptr<FiniteAutomaton> automaton)
 {
     string chain = "";
- 
+
     cout << "E for empty chain: ";
     cin >> chain;
 
-    if(chain == "E")
+    if (chain == "E")
         chain = "";
 
     vector<string> chains = chainSplit(chain);
     if (automaton->isChainValid(chains))
         if (automaton->testChain(chains))
-            cout << "chain accepted" << endl;
+            cout << "-- CHAIN ACCEPTED --" << endl;
         else
-            cout << "chain rejected" << endl;
+            cout << "-- CHAIN REJECTED --" << endl;
     else
-        cout << "chain invalid" << endl;
+        cout << "** CHAIN INVALID **" << endl;
 }
