@@ -9,5 +9,5 @@ q0:E:1,q1:1
 q1:b:1,q1:
 q1:E:z0,q2:z0
 init_state:q0
-init_stack_symbol:z
+init_stack_symbol:z0
 final_states:q2

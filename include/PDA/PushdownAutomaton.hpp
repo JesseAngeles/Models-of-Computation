@@ -9,7 +9,7 @@
 #include <stack>
 #include <optional>
 #include <string>
-#include <iostream>
+#include <memory>
 
 #include "PDA/State.hpp"
 #include "PDA/InputSymbol.hpp"
@@ -20,59 +20,61 @@ class PushdownAutomaton
 {
 private:
     // Attributes
-    std::set<State> states;
-    std::set<InputSymbol> input_alphabet;
-    std::set<StackSymbol> stack_alphabet;
-    std::set<Transition> transitions;
-    State init_state;
-    StackSymbol init_stack_symbol;
-    std::set<State> final_states;
+    std::set<std::shared_ptr<State>> states;
+    std::set<std::shared_ptr<InputSymbol>> input_alphabet;
+    std::set<std::shared_ptr<StackSymbol>> stack_alphabet;
+    std::set<std::shared_ptr<Transition>> transitions;
+    std::shared_ptr<State> init_state;
+    std::shared_ptr<StackSymbol> init_stack_symbol;
+    std::set<std::shared_ptr<State>> final_states;
 
     // Functions
     std::vector<std::string> split(const std::string &line, char delimiter);
+    bool isChainValid(const std::string &chain) const;
+    std::vector<std::shared_ptr<InputSymbol>> string2vector(const std::string &chain);
+    bool recursiveTest(std::shared_ptr<State> current_state,
+                       std::stack<std::shared_ptr<StackSymbol>> current_stack,
+                       std::vector<std::shared_ptr<InputSymbol>> current_chain);
 
 public:
     // Constructor
     PushdownAutomaton(
-        const std::set<State> &states,
-        const std::set<InputSymbol> &input_alphabet,
-        const std::set<StackSymbol> &stack_alphabet,
-        const std::set<Transition> &transitions,
-        const State &init_state,
-        const StackSymbol &init_stack_symbol,
-        const std::set<State> &final_states)
-        : states(states),
-          input_alphabet(input_alphabet),
-          stack_alphabet(stack_alphabet),
-          transitions(transitions),
-          init_state(init_state),
-          init_stack_symbol(init_stack_symbol),
-          final_states(final_states) {}
+        const std::set<std::shared_ptr<State>> &states,
+        const std::set<std::shared_ptr<InputSymbol>> &input_alphabet,
+        const std::set<std::shared_ptr<StackSymbol>> &stack_alphabet,
+        const std::set<std::shared_ptr<Transition>> &transitions,
+        const std::shared_ptr<State> &init_state,
+        const std::shared_ptr<StackSymbol> &init_stack_symbol,
+        const std::set<std::shared_ptr<State>> &final_states);
 
     PushdownAutomaton(const std::string &file_path);
 
     // Functions
+    bool testChain(std::string);
 
     // Getters
-    const std::set<State> &getStates() const { return states; }
-    const std::set<InputSymbol> &getInputAlphabet() const { return input_alphabet; }
-    const std::set<StackSymbol> &getStackAlphabet() const { return stack_alphabet; }
-    const std::set<Transition> &getTransition() const { return transitions; }
-    const State &getInitState() const { return init_state; }
-    const StackSymbol &getInitStackSymbol() const { return init_stack_symbol; }
-    const std::set<State> &getFinalStates() const { return final_states; }
+    const std::set<std::shared_ptr<State>> &getStates() const;
+    const std::set<std::shared_ptr<InputSymbol>> &getInputAlphabet() const;
+    const std::set<std::shared_ptr<StackSymbol>> &getStackAlphabet() const;
+    const std::set<std::shared_ptr<Transition>> &getTransitions() const;
+    const std::shared_ptr<State> &getInitState() const;
+    const std::shared_ptr<StackSymbol> &getInitStackSymbol() const;
+    const std::set<std::shared_ptr<State>> &getFinalStates() const;
 
     // Setters
-    void setStates(const std::set<State> &states) { this->states = states; }
-    void setInputAlphabet(const std::set<InputSymbol> &input_alphabet) { this->input_alphabet = input_alphabet; }
-    void setStackAlphabet(const std::set<StackSymbol> &stack_alphabet) { this->stack_alphabet = stack_alphabet; }
-    void setTransition(const std::set<Transition> &transitions) { this->transitions = transitions; }
-    void setStates(const State &init_state) { this->init_state = init_state; }
-    void setInitStackAlphabet(const StackSymbol &init_stack_symbol) { this->init_stack_symbol = init_stack_symbol; }
-    void setFinalStates(const std::set<State> &final_states) { this->final_states = final_states; }
+    void setStates(const std::set<std::shared_ptr<State>> &states);
+    void setInputAlphabet(const std::set<std::shared_ptr<InputSymbol>> &input_alphabet);
+    void setStackAlphabet(const std::set<std::shared_ptr<StackSymbol>> &stack_alphabet);
+    void setTransitions(const std::set<std::shared_ptr<Transition>> &transitions);
+    void setInitState(const std::shared_ptr<State> &init_state);
+    void setInitStackSymbol(const std::shared_ptr<StackSymbol> &init_stack_symbol);
+    void setFinalStates(const std::set<std::shared_ptr<State>> &final_states);
 
-    // Displays
+    // Display
     void display() const;
+    void displayStep(std::shared_ptr<State> current_state,
+                     std::stack<std::shared_ptr<StackSymbol>> current_stack,
+                     std::vector<std::shared_ptr<InputSymbol>> current_chain) const;
 };
 
 #endif // PUSH_DOWN_AUTOMATON_H

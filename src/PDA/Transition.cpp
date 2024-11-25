@@ -2,11 +2,11 @@
 
 // Implementación del constructor principal
 Transition::Transition(
-    const State &start_state,
-    const State &end_state,
-    const std::optional<InputSymbol> &symbol,
-    const StackSymbol &init_top,
-    const std::stack<StackSymbol> &end_top)
+    const std::shared_ptr<State> &start_state,
+    const std::shared_ptr<State> &end_state,
+    const std::optional<std::shared_ptr<InputSymbol>> &symbol,
+    const std::shared_ptr<StackSymbol> &init_top,
+    const std::stack<std::shared_ptr<StackSymbol>> &end_top)
     : start_state(start_state),
       end_state(end_state),
       init_top(init_top),
@@ -17,11 +17,11 @@ Transition::Transition(
 }
 
 Transition::Transition(
-    const State &start_state,
-    const State &end_state,
-    const std::optional<InputSymbol> &symbol,
-    const StackSymbol &init_top,
-    const std::optional<StackSymbol> &end_symbol)
+    const std::shared_ptr<State> &start_state,
+    const std::shared_ptr<State> &end_state,
+    const std::optional<std::shared_ptr<InputSymbol>> &symbol,
+    const std::shared_ptr<StackSymbol> &init_top,
+    const std::optional<std::shared_ptr<StackSymbol>> &end_symbol)
     : start_state(start_state),
       end_state(end_state),
       init_top(init_top)
@@ -62,9 +62,9 @@ bool Transition::operator<(const Transition &other) const
         return false;
 
     // Si el símbolo de entrada es igual, comparar el símbolo de la parte superior de la pila
-    if (StackSymbol(init_top) < StackSymbol(other.init_top))
+    if (init_top < other.init_top)
         return true;
-    if (StackSymbol(other.init_top) < StackSymbol(init_top))
+    if (other.init_top < init_top)
         return false;
 
     // Finalmente, comparar las pilas de transición (end_top)
@@ -73,8 +73,8 @@ bool Transition::operator<(const Transition &other) const
     if (other.end_top.size() < end_top.size())
         return false;
 
-    std::stack<StackSymbol> current_end_top = end_top;
-    std::stack<StackSymbol> other_end_top = other.end_top;
+    std::stack<std::shared_ptr<StackSymbol>> current_end_top = end_top;
+    std::stack<std::shared_ptr<StackSymbol>> other_end_top = other.end_top;
 
     while (!current_end_top.empty())
     {
@@ -88,4 +88,24 @@ bool Transition::operator<(const Transition &other) const
     }
 
     return false;
+}
+
+// Display
+void Transition::display() const
+{
+    std::cout << "\n(" << start_state->getName() << ", " << end_state->getName() << ") ->";
+
+    symbol.has_value() ? std::cout << symbol.value()->getName() : std::cout << "E";
+
+    std::cout << "," << init_top->getName() << "/";
+
+    std::stack<std::shared_ptr<StackSymbol>> copy_stack = end_top; 
+    if (!copy_stack.empty())
+        while(!copy_stack.empty())
+            {
+                std::cout << copy_stack.top()->getName() << " ";
+                copy_stack.pop();
+            }
+    else
+        std::cout << "E";
 }
