@@ -2,7 +2,7 @@
 #include <fstream>
 #include <sstream>
 
-#include "../include/FiniteAutomaton.h"
+#include "FiniteAutomaton/FiniteAutomaton.h"
 
 #define divisor "*************************"
 
