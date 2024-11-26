@@ -16,6 +16,8 @@
 #include "PDA/StackSymbol.hpp"
 #include "PDA/Transition.hpp"
 
+#include "PDA/auxVisited.hpp"
+
 class PushdownAutomaton
 {
 private:
@@ -36,7 +38,8 @@ private:
                    std::stack<std::shared_ptr<StackSymbol>> top);
     bool recursiveTest(std::shared_ptr<State> current_state,
                        std::stack<std::shared_ptr<StackSymbol>> current_stack,
-                       std::vector<std::shared_ptr<InputSymbol>> current_chain);
+                       std::vector<std::shared_ptr<InputSymbol>> current_chain,
+                       std::set<auxVisited> visited);
 
 public:
     // Constructor

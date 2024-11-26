@@ -6,7 +6,7 @@ using namespace std;
 
 int main()
 {
-    PushdownAutomaton pda("resources/PDA/1_empty_stack.csv");
+    PushdownAutomaton pda("resources/PDA/1_empty_stack2.csv");
     pda.display();
 
     cout << endl;

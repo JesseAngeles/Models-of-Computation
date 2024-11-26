@@ -196,7 +196,7 @@ void PushdownAutomaton::pushStack(std::stack<std::shared_ptr<StackSymbol>> &stac
         top.pop();
     }
 
-    while(!reverse.empty())
+    while (!reverse.empty())
     {
         stack.push(reverse.top());
         reverse.pop();
@@ -206,7 +206,8 @@ void PushdownAutomaton::pushStack(std::stack<std::shared_ptr<StackSymbol>> &stac
 bool PushdownAutomaton::recursiveTest(
     std::shared_ptr<State> current_state,
     std::stack<std::shared_ptr<StackSymbol>> current_stack,
-    std::vector<std::shared_ptr<InputSymbol>> current_chain)
+    std::vector<std::shared_ptr<InputSymbol>> current_chain,
+    std::set<auxVisited> visited)
 {
     if (final_states.empty() && current_stack.empty())
         return current_chain.empty();
@@ -242,8 +243,17 @@ bool PushdownAutomaton::recursiveTest(
             next_stack.pop();
             pushStack(next_stack, transition->getEndTop());
 
+            // Añadir a los visitados
+            auxVisited new_visited(next_state, next_chain.size());
+            if (!next_stack.empty())
+                new_visited.setSymbol(next_stack.top());
+            if (visited.find(new_visited) != visited.end())
+                continue;
+            else
+                visited.insert(new_visited);
+
             // Llamada recursiva con las actualizaciones
-            if (recursiveTest(next_state, next_stack, next_chain))
+            if (recursiveTest(next_state, next_stack, next_chain, visited))
                 return true;
         }
     }
@@ -269,7 +279,10 @@ bool PushdownAutomaton::testChain(std::string chain)
     current_stack.push(init_stack_symbol);
     std::vector<std::shared_ptr<InputSymbol>> current_chain = string2vector(chain);
 
-    return recursiveTest(current_state, current_stack, current_chain);
+    std::set<auxVisited> visited;
+    visited.insert(auxVisited(current_state, current_chain.size(), current_stack.top()));
+
+    return recursiveTest(current_state, current_stack, current_chain, visited);
 }
 
 // Displays
