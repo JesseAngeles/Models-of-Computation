@@ -186,11 +186,31 @@ std::vector<std::shared_ptr<InputSymbol>> PushdownAutomaton::string2vector(const
     return new_chain;
 }
 
+void PushdownAutomaton::pushStack(std::stack<std::shared_ptr<StackSymbol>> &stack,
+                                  std::stack<std::shared_ptr<StackSymbol>> top)
+{
+    std::stack<std::shared_ptr<StackSymbol>> reverse;
+    while (!top.empty())
+    {
+        reverse.push(top.top());
+        top.pop();
+    }
+
+    while(!reverse.empty())
+    {
+        stack.push(reverse.top());
+        reverse.pop();
+    }
+}
+
 bool PushdownAutomaton::recursiveTest(
     std::shared_ptr<State> current_state,
     std::stack<std::shared_ptr<StackSymbol>> current_stack,
     std::vector<std::shared_ptr<InputSymbol>> current_chain)
 {
+    if (final_states.empty() && current_stack.empty())
+        return current_chain.empty();
+
     // Tomar el símbolo actual (si existe)
     std::optional<std::shared_ptr<InputSymbol>> current_symbol =
         current_chain.empty() ? std::nullopt : std::make_optional(current_chain.front());
@@ -220,20 +240,7 @@ bool PushdownAutomaton::recursiveTest(
 
             // Actualizar la pila
             next_stack.pop();
-            std::stack<std::shared_ptr<StackSymbol>> copy = transition->getEndTop();
-            std::stack<std::shared_ptr<StackSymbol>> reverse;
-
-            while (!copy.empty())
-            {
-                reverse.push(copy.top());
-                copy.pop();
-            }
-
-            while (!reverse.empty())
-            {
-                next_stack.push(reverse.top());
-                reverse.pop();
-            }
+            pushStack(next_stack, transition->getEndTop());
 
             // Llamada recursiva con las actualizaciones
             if (recursiveTest(next_state, next_stack, next_chain))
@@ -243,15 +250,9 @@ bool PushdownAutomaton::recursiveTest(
 
     // Condición de salida: verificar si la cadena ya fue leída
     if (current_chain.empty())
-    {
-        if (final_states.empty()) // Si no hay estados finales, pila vacía indica aceptación
-            return current_stack.empty();
-
-        // Verificar si el estado actual es un estado final
         for (const std::shared_ptr<State> &state : final_states)
             if (*state == *current_state)
                 return true;
-    }
 
     // Si ninguna transición llevó a aceptación, retornar falso
     return false;
@@ -336,8 +337,8 @@ void PushdownAutomaton::displayStep(
     }
 
     std::cout << "\nCurrent chain: ";
-    // for (std::shared_ptr<InputSymbol> sym : current_chain)
-    //     std::cout << sym->getName() << " ";
+    for (std::shared_ptr<InputSymbol> sym : current_chain)
+        std::cout << sym->getName() << " ";
 
     std::cout << std::endl;
 }

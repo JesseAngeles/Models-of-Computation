@@ -32,6 +32,8 @@ private:
     std::vector<std::string> split(const std::string &line, char delimiter);
     bool isChainValid(const std::string &chain) const;
     std::vector<std::shared_ptr<InputSymbol>> string2vector(const std::string &chain);
+    void pushStack(std::stack<std::shared_ptr<StackSymbol>> &stack,
+                   std::stack<std::shared_ptr<StackSymbol>> top);
     bool recursiveTest(std::shared_ptr<State> current_state,
                        std::stack<std::shared_ptr<StackSymbol>> current_stack,
                        std::vector<std::shared_ptr<InputSymbol>> current_chain);
