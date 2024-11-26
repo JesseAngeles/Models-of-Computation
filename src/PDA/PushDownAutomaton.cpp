@@ -285,6 +285,66 @@ bool PushdownAutomaton::testChain(std::string chain)
     return recursiveTest(current_state, current_stack, current_chain, visited);
 }
 
+void PushdownAutomaton::empty_set2final_state()
+{
+    // Create new states
+    std::shared_ptr<State> new_init_state = std::make_shared<State>("a");
+    std::shared_ptr<State> new_final_state = std::make_shared<State>("end");
+
+    // create new init stack
+    std::shared_ptr<StackSymbol> new_init_stack_symbol = std::make_shared<StackSymbol>("x0");
+
+    // Crear nueva stack
+    std::stack<std::shared_ptr<StackSymbol>> new_init_stack;
+    new_init_stack.push(new_init_stack_symbol);
+    new_init_stack.push(init_stack_symbol);
+
+    // New first transition
+    std::shared_ptr<Transition> new_init_transition =
+        std::make_shared<Transition>(new_init_state, init_state, std::nullopt, new_init_stack_symbol, new_init_stack);
+
+    // Transitions to final state
+    for (const std::shared_ptr<State> &state : states)
+    {
+        std::shared_ptr<Transition> new_transition =
+            std::make_shared<Transition>(state, new_final_state, std::nullopt, new_init_stack_symbol, new_init_stack_symbol);
+
+        transitions.insert(new_transition);
+    }
+
+    // Set elements
+    states.insert(new_init_state);
+    states.insert(new_final_state);
+
+    init_state = new_init_state;
+    final_states.insert(new_final_state);
+
+    stack_alphabet.insert(new_init_stack_symbol);
+    init_stack_symbol = new_init_stack_symbol;
+
+    transitions.insert(new_init_transition);
+}
+
+void PushdownAutomaton::final_state2empty_set()
+{
+    // Create new state
+    std::shared_ptr<State> new_final_state = std::make_shared<State>("end");
+    states.insert(new_final_state);
+    final_states.insert(new_final_state);
+
+    // Create new transition
+    for (const std::shared_ptr<State> &state : final_states)
+        for (const std::shared_ptr<StackSymbol> &symbol : stack_alphabet)
+        {
+            std::shared_ptr<Transition> new_transition =
+                std::make_shared<Transition>(state, new_final_state, std::nullopt, symbol, std::nullopt);
+
+            transitions.insert(new_transition);
+        }
+
+    final_states.clear();
+}
+
 // Displays
 void PushdownAutomaton::display() const
 {
