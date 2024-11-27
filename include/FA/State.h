@@ -25,22 +25,7 @@ public:
     void insertClosure(std::shared_ptr<State> state) { this->closure.insert(state); }
 
     // Sobrecarga del operador <
-    bool operator<(const State &other) const
-    {
-        return name < other.name;
-    }
-
-    // Sobrecarga del operador ==
-    bool operator==(const State &other) const
-    {
-        return name == other.name; // Comparar estados por nombre
-    }
-
-    // Sobrecarga del operador !
-    bool operator!() const
-    {
-        return name.empty();
-    }
+    bool operator<(const State &other) const { return name < other.name; }
 
 private:
     std::string name;

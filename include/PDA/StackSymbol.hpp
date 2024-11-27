@@ -17,8 +17,6 @@ public:
 
     // Overloading
     bool operator<(const StackSymbol &other) const { return name < other.name; }
-    bool operator==(const StackSymbol &other) const { return name == other.name; }
-    bool operator!() const { return name.empty(); }
 
     // Getters
     std::string getName() const { return name; }

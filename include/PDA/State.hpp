@@ -18,7 +18,6 @@ public:
     // Overloading
     bool operator<(const State &other) const { return name < other.name; }
     bool operator==(const State &other) const { return name == other.name; }
-    bool operator!() const { return name.empty(); }
 
     // Getters
     std::string getName() const { return name; }
