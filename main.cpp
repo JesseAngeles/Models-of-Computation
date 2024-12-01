@@ -11,7 +11,7 @@ int main()
 
     std::shared_ptr<TerminalSymbol> a_sym = std::make_shared<TerminalSymbol>("a");
     std::shared_ptr<TerminalSymbol> b_sym = std::make_shared<TerminalSymbol>("b");
-    
+
     std::vector<std::shared_ptr<Symbol>> prod1_res;
     prod1_res.push_back(a_sym);
     prod1_res.push_back(S_sym);
@@ -34,7 +34,9 @@ int main()
     prods.insert(prod2);
 
     ContextFreeGrammar cfg(non_terminal_symbols, terminal_symbols, prods, S_sym);
-
     cfg.display();
 
+    ContextFreeGrammar cfg2("./resources/CFG/1_rules.csv");
+    std::cout << "\n\n";
+    cfg2.display();
 }
