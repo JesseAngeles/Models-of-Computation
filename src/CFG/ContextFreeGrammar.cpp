@@ -34,7 +34,10 @@ ContextFreeGrammar::ContextFreeGrammar(const std::string &file_path)
             }
 
         if (!finded)
+        {
             from_symbol = std::make_shared<NonTerminalSymbol>(current_symbol);
+            non_terminal_symbols.insert(from_symbol);
+        }
 
         if (is_start_symbol)
             start_symbol = from_symbol;
@@ -80,7 +83,7 @@ ContextFreeGrammar::ContextFreeGrammar(const std::string &file_path)
                     for (const std::shared_ptr<TerminalSymbol> &current : terminal_symbols)
                         if (current->getName() == symbol)
                         {
-                            finded = false;
+                            finded = true;
                             current_production.push_back(current);
                             break;
                         }
@@ -96,10 +99,6 @@ ContextFreeGrammar::ContextFreeGrammar(const std::string &file_path)
 
             std::shared_ptr<ProductionRule> new_production = std::make_shared<ProductionRule>(from_symbol, current_production);
             production_rules.insert(new_production);
-
-            // std::cout << "\nProduction: " << new_production->getStartSymbol()->getName() << "-> ";
-            // for (auto c : new_production->getProduction())
-            //     std::cout << c->getName() << " ";
         }
     }
 }
@@ -115,25 +114,70 @@ std::vector<std::string> ContextFreeGrammar::split(const std::string &line, char
     return tokens;
 }
 
+bool ContextFreeGrammar::isChainValid(const std::string &chain) const
+{
+    for (const char &c : chain)
+    {
+        bool finded = false;
+        for (const std::shared_ptr<TerminalSymbol> &symbol : terminal_symbols)
+            if (c == symbol->getName()[0])
+            {
+                finded = true;
+                break;
+            }
+
+        if (!finded)
+            return false;
+    }
+
+    return true;
+}
+
+std::string ContextFreeGrammar::recursiveTest(const std::string &objective_chain,
+                                              std::string current_chain,
+                                              std::shared_ptr<NonTerminalSymbol>
+                                                  current_symbol)
+{
+    
+
+    // Iterar todas las producciones de current_symbol
+    for (const std::shared_ptr<ProductionRule> production_rule : production_rules)
+    {
+        if (production_rule->getStartSymbol() == current_symbol)
+        {
+            // Generar la nueva production
+            std::string current = current_chain;
+
+            for (const std::shared_ptr<Symbol> symbol : production_rule->getProduction())
+            {
+                if (dynamic_cast<TerminalSymbol *>(symbol.get()))
+                {
+                    current += symbol->getName();
+                }
+                else if (std::shared_ptr<NonTerminalSymbol> non_Terminal_symbol =
+                             std::dynamic_pointer_cast<NonTerminalSymbol>(symbol))
+                {
+                    current += recursiveTest(objective_chain, current, non_Terminal_symbol);
+                }
+            }
+        }
+    }
+
+    return "";
+}
+
+// Public funtion
+bool ContextFreeGrammar::testChain(std::string chain)
+{
+    if (!isChainValid(chain))
+        return false;
+
+    return recursiveTest(chain, "", start_symbol) == chain;
+}
+
 // Display
 void ContextFreeGrammar::display() const
 {
-    // // delete
-    // std::cout << "\nFisrt symbol: " << start_symbol->getName();
-    // std::cout << "\nTerminal symbols:\n";
-    // for (auto c : terminal_symbols)
-    //     std::cout << c->getName() << " ";
-    // std::cout << "\nNon terminal symbols:\n";
-    // for (auto c : non_terminal_symbols)
-    //     std::cout << c->getName() << " ";
-
-    // std::cout << "\nProductions: " << production_rules.size();
-
-    // std::cout << "\nProductions: " << production_rules.size();
-    for (auto c : non_terminal_symbols)
-        if (c->getName() == start_symbol->getName())
-            std::cout << "*";
-
     // Iterate non terminal
     for (const std::shared_ptr<NonTerminalSymbol> &non_terminal : non_terminal_symbols)
     {

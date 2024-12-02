@@ -34,9 +34,10 @@ int main()
     prods.insert(prod2);
 
     ContextFreeGrammar cfg(non_terminal_symbols, terminal_symbols, prods, S_sym);
-    cfg.display();
-
     ContextFreeGrammar cfg2("./resources/CFG/1_rules.csv");
-    std::cout << "\n\n";
     cfg2.display();
+    // cfg2.testChain("ab");
+    // std::cout << "is valid: " << cfg2.testChain("aaaabbbb") << "\n";
+    // std::cout << "is valid: " << cfg2.testChain("ab") << "\n";
+
 }

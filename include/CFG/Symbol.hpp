@@ -12,6 +12,7 @@ private:
 public:
     // Constructor
     Symbol(const std::string &name) : name(name) {}
+    virtual ~Symbol() = default;
 
     // Overloading
     bool operator<(const Symbol &other) const { return name < other.name; }
