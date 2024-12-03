@@ -45,6 +45,7 @@ public:
     void eliminateUnitPairs();
     void eliminateNonGeneratingSymbols();
     void eliminateUnreachableSymbols();
+    void clean();
 
     void chomskyForm();
 

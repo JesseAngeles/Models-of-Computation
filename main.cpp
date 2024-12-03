@@ -9,8 +9,6 @@ int main()
 {
     ContextFreeGrammar cfg("./resources/CFG/2_rules.csv");
     cfg.display();
-    cfg.eliminateEpsilonProductions();
-
-    cout << "\n\n";
+    cfg.clean();
     cfg.display();
 }

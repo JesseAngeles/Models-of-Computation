@@ -215,9 +215,161 @@ void ContextFreeGrammar::eliminateEpsilonProductions()
         production_rules.erase(production_rule);
 }
 
+void ContextFreeGrammar::eliminateUnitPairs()
+{
+    // Buscar aquellas producciones que tengan un simbolo no terminal diferente
+    std::set<std::pair<std::shared_ptr<NonTerminalSymbol>, std::shared_ptr<NonTerminalSymbol>>> pairs;
+
+    std::set<std::shared_ptr<ProductionRule>> pairs_delete;
+
+    // Encontrar pares unitarios
+    for (const std::shared_ptr<ProductionRule> &production_rule : production_rules)
+        if (production_rule->getProduction().size() == 1)
+        {
+            std::shared_ptr<NonTerminalSymbol> non_terminal_symbol = std::dynamic_pointer_cast<NonTerminalSymbol>(production_rule->getProduction()[0]);
+            if (non_terminal_symbols.find(non_terminal_symbol) != non_terminal_symbols.end())
+            {
+                pairs.insert(std::make_pair(production_rule->getStartSymbol(), non_terminal_symbol));
+                pairs_delete.insert(production_rule);
+            }
+        }
+
+    for (const std::pair<std::shared_ptr<NonTerminalSymbol>, std::shared_ptr<NonTerminalSymbol>> &i : pairs)
+        for (const std::pair<std::shared_ptr<NonTerminalSymbol>, std::shared_ptr<NonTerminalSymbol>> &j : pairs)
+            if (i.second == j.first)
+                pairs.insert(std::make_pair(i.first, j.second));
+
+    for (const std::shared_ptr<ProductionRule> &production_rule : pairs_delete)
+        production_rules.erase(production_rule);
+
+    for (const std::pair<std::shared_ptr<NonTerminalSymbol>, std::shared_ptr<NonTerminalSymbol>> &pair : pairs)
+    {
+        if (pair.first == pair.second)
+            continue;
+
+        for (const std::shared_ptr<ProductionRule> &production_rule : production_rules)
+            if (production_rule->getStartSymbol() == pair.second)
+                production_rules.insert(std::make_shared<ProductionRule>(pair.first, production_rule->getProduction()));
+    }
+}
+
+void ContextFreeGrammar::eliminateNonGeneratingSymbols()
+{
+    // Definir simbolos generadores
+    std::set<std::shared_ptr<Symbol>> generating_symbols;
+
+    for (const std::shared_ptr<TerminalSymbol> &terminal_symbol : terminal_symbols)
+        generating_symbols.insert(terminal_symbol);
+
+    int count;
+    do
+    {
+        count = generating_symbols.size();
+
+        // Iterar sobre las producciones
+        for (const std::shared_ptr<ProductionRule> &production_rule : production_rules)
+        {
+            bool is_generating = true;
+
+            // Iterar sobre los simbolos de la produccion
+            for (const std::shared_ptr<Symbol> &symbol : production_rule->getProduction())
+                if (generating_symbols.find(symbol) == generating_symbols.end())
+                {
+                    is_generating = false;
+                    break;
+                }
+
+            if (is_generating)
+                generating_symbols.insert(production_rule->getStartSymbol());
+        }
+    } while (count < generating_symbols.size());
+
+    // Iterar nuevamente para borrar
+    std::set<std::shared_ptr<ProductionRule>> productions_delete;
+    std::set<std::shared_ptr<NonTerminalSymbol>> non_terminal_delete;
+
+    for (const std::shared_ptr<ProductionRule> &production_rule : production_rules)
+    {
+        // Eliminar no generadores
+        if (generating_symbols.find(production_rule->getStartSymbol()) == generating_symbols.end())
+        {
+            non_terminal_delete.insert(production_rule->getStartSymbol());
+            continue;
+        }
+
+        // Eliminar producciones que no tengan generadores
+        for (const std::shared_ptr<Symbol> &symbol : production_rule->getProduction())
+            if (generating_symbols.find(symbol) == generating_symbols.end())
+            {
+                productions_delete.insert(production_rule);
+                break;
+            }
+    }
+
+    for (const std::shared_ptr<ProductionRule> &production_rule : productions_delete)
+        production_rules.erase(production_rule);
+
+    for (const std::shared_ptr<NonTerminalSymbol> &non_terminal : non_terminal_delete)
+        non_terminal_symbols.erase(non_terminal);
+
+    for (const std::shared_ptr<NonTerminalSymbol> &non_terminal : non_terminal_symbols)
+        if (generating_symbols.find(non_terminal) == generating_symbols.end())
+            non_terminal_symbols.erase(non_terminal);
+}
+
+void ContextFreeGrammar::eliminateUnreachableSymbols()
+{
+    std::set<std::shared_ptr<Symbol>> achievable_symbols;
+    achievable_symbols.insert(start_symbol);
+
+    int count;
+    do
+    {
+        count = achievable_symbols.size();
+
+        // Iterar las producciones
+        for (const std::shared_ptr<ProductionRule> &production_rule : production_rules)
+            if (achievable_symbols.find(production_rule->getStartSymbol()) != achievable_symbols.end())
+                // Iterar todos los simbolos y añadirlos a los achievable_symbols
+                for (const std::shared_ptr<Symbol> &symbol : production_rule->getProduction())
+                    achievable_symbols.insert(symbol);
+
+    } while (count < achievable_symbols.size());
+
+    // Eliminar las producciones que inicien con un alcanzable
+    std::set<std::shared_ptr<ProductionRule>> production_delete;
+    std::set<std::shared_ptr<NonTerminalSymbol>> non_terminal_delete;
+
+    for (const std::shared_ptr<ProductionRule> &production_rule : production_rules)
+        if (achievable_symbols.find(production_rule->getStartSymbol()) == achievable_symbols.end())
+        {
+            production_delete.insert(production_rule);
+            non_terminal_delete.insert(production_rule->getStartSymbol());
+        }
+
+    for (const std::shared_ptr<ProductionRule> &production_rule : production_delete)
+        production_rules.erase(production_rule);
+
+    for (const std::shared_ptr<NonTerminalSymbol> &non_terminal : non_terminal_delete)
+        non_terminal_symbols.erase(non_terminal);
+
+    // std::cout << "\n";
+    // for (auto c : achievable_symbols)
+    //     std::cout << c->getName() << " ";
+}
+
+void ContextFreeGrammar::clean()
+{
+    eliminateEpsilonProductions();
+    eliminateUnitPairs();
+    eliminateNonGeneratingSymbols();
+    eliminateUnreachableSymbols();
+}
+
 // Display
 void ContextFreeGrammar::display() const
 {
+    std::cout << std::endl;
     // Iterate non terminal
     for (const std::shared_ptr<NonTerminalSymbol> &non_terminal : non_terminal_symbols)
     {
