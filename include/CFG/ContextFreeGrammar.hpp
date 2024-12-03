@@ -6,6 +6,7 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
+#include <cmath>
 
 #include "CFG/NonTerminalSymbol.hpp"
 #include "TerminalSymbol.hpp"
@@ -22,10 +23,6 @@ private:
 
     // Functions
     std::vector<std::string> split(const std::string &line, char delimiter);
-    bool isChainValid(const std::string &chain) const;
-    std::string recursiveTest(const std::string &objective_chain,
-                              std::string current_chain,
-                              std::shared_ptr<NonTerminalSymbol> current_symbol);
 
 public:
     // Constructor
@@ -44,7 +41,12 @@ public:
     ContextFreeGrammar(const std::string &file_path);
 
     // Functions
-    bool testChain(std::string);
+    void eliminateEpsilonProductions();
+    void eliminateUnitPairs();
+    void eliminateNonGeneratingSymbols();
+    void eliminateUnreachableSymbols();
+
+    void chomskyForm();
 
     // Getters
     const std::set<std::shared_ptr<NonTerminalSymbol>> getNonTerminalSymbols() const { return non_terminal_symbols; }

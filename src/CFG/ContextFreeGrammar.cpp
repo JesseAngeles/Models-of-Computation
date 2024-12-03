@@ -114,65 +114,105 @@ std::vector<std::string> ContextFreeGrammar::split(const std::string &line, char
     return tokens;
 }
 
-bool ContextFreeGrammar::isChainValid(const std::string &chain) const
+// Functions
+void ContextFreeGrammar::eliminateEpsilonProductions()
 {
-    for (const char &c : chain)
+    std::set<std::shared_ptr<ProductionRule>> delete_production;
+    std::set<std::shared_ptr<NonTerminalSymbol>> epsilon_generators;
+    std::set<std::shared_ptr<ProductionRule>> productions_afected;
+
+    int last_size;
+    do
     {
-        bool finded = false;
-        for (const std::shared_ptr<TerminalSymbol> &symbol : terminal_symbols)
-            if (c == symbol->getName()[0])
+        last_size = epsilon_generators.size();
+
+        // Iterar cada produccion
+        for (const std::shared_ptr<ProductionRule> &production_rule : production_rules)
+        {
+            bool is_epsilon_generator = true;
+            bool is_affected = false;
+
+            if (production_rule->getProduction().empty())
             {
-                finded = true;
-                break;
+                epsilon_generators.insert(production_rule->getStartSymbol());
+                delete_production.insert(production_rule);
             }
 
-        if (!finded)
-            return false;
-    }
-
-    return true;
-}
-
-std::string ContextFreeGrammar::recursiveTest(const std::string &objective_chain,
-                                              std::string current_chain,
-                                              std::shared_ptr<NonTerminalSymbol>
-                                                  current_symbol)
-{
-    
-
-    // Iterar todas las producciones de current_symbol
-    for (const std::shared_ptr<ProductionRule> production_rule : production_rules)
-    {
-        if (production_rule->getStartSymbol() == current_symbol)
-        {
-            // Generar la nueva production
-            std::string current = current_chain;
-
-            for (const std::shared_ptr<Symbol> symbol : production_rule->getProduction())
+            // Iterar cada simbolo de la produccion
+            for (const std::shared_ptr<Symbol> &symbol : production_rule->getProduction())
             {
                 if (dynamic_cast<TerminalSymbol *>(symbol.get()))
+                    is_epsilon_generator = false;
+
+                if (std::shared_ptr<NonTerminalSymbol> non_terminal_symbol =
+                        std::dynamic_pointer_cast<NonTerminalSymbol>(symbol))
                 {
-                    current += symbol->getName();
-                }
-                else if (std::shared_ptr<NonTerminalSymbol> non_Terminal_symbol =
-                             std::dynamic_pointer_cast<NonTerminalSymbol>(symbol))
-                {
-                    current += recursiveTest(objective_chain, current, non_Terminal_symbol);
+                    if (epsilon_generators.find(non_terminal_symbol) == epsilon_generators.end())
+                        is_epsilon_generator = false;
+                    else
+                        is_affected = true;
                 }
             }
+
+            if (is_affected)
+                productions_afected.insert(production_rule);
+
+            if (is_epsilon_generator)
+                epsilon_generators.insert(production_rule->getStartSymbol());
+        }
+    } while (last_size != epsilon_generators.size());
+
+    // Iterar sobre cada produccion afectada
+    for (const std::shared_ptr<ProductionRule> &production_rule : productions_afected)
+    {
+        int count = 0;
+        // Iterar cada simbolo y buscar si es un generador de epsilon
+        for (const std::shared_ptr<Symbol> &symbol : production_rule->getProduction())
+            if (epsilon_generators.find(std::dynamic_pointer_cast<NonTerminalSymbol>(symbol)) != epsilon_generators.end())
+                count++;
+
+        int total = std::pow(2, count) - 1;
+        std::vector<std::vector<std::shared_ptr<Symbol>>> new_productions(total);
+        int binary_count = 1;
+
+        // Iterar cada simbolo otra vez, ahora para crear todas las combinaciones
+        for (const std::shared_ptr<Symbol> &symbol : production_rule->getProduction())
+        {
+            // Si no pertenece a los generadores de epsilon, agregar a todos
+            if (epsilon_generators.find(std::static_pointer_cast<NonTerminalSymbol>(symbol)) == epsilon_generators.end())
+            {
+                for (std::vector<std::shared_ptr<Symbol>> &production : new_productions)
+                    production.push_back(symbol);
+            }
+            // Si pertenece a los generadores de epsilon, agregar a la mitad
+            else
+            {
+                bool add = true;
+                for (int i = 0; i < total; i++)
+                {
+                    if (i % binary_count == 0)
+                        add = !add;
+
+                    if (add)
+                        new_productions[i].push_back(symbol);
+                }
+                binary_count *= 2;
+            }
+        }
+
+        // Asginar nuevas transiciones
+        for (const std::vector<std::shared_ptr<Symbol>> &new_production : new_productions)
+        {
+            if (new_production.empty())
+                continue;
+
+            production_rules.insert(std::make_shared<ProductionRule>(production_rule->getStartSymbol(), new_production));
         }
     }
 
-    return "";
-}
-
-// Public funtion
-bool ContextFreeGrammar::testChain(std::string chain)
-{
-    if (!isChainValid(chain))
-        return false;
-
-    return recursiveTest(chain, "", start_symbol) == chain;
+    // Eliminar transiciones epsilon
+    for (const std::shared_ptr<ProductionRule> &production_rule : delete_production)
+        production_rules.erase(production_rule);
 }
 
 // Display

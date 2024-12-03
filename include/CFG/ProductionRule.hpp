@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <memory>
+#include <iostream>
 
 #include "NonTerminalSymbol.hpp"
 #include "TerminalSymbol.hpp"
@@ -23,7 +24,7 @@ public:
 
     // Overloading
     bool operator<(const ProductionRule &other) const;
-    
+
     // Getters
     const std::shared_ptr<NonTerminalSymbol> getStartSymbol() const { return start_symbol; }
     const std::vector<std::shared_ptr<Symbol>> getProduction() const { return production; }
@@ -31,6 +32,9 @@ public:
     // Setters
     void setStartSymbol(const std::shared_ptr<NonTerminalSymbol> &start_symbol) { this->start_symbol = start_symbol; }
     void setProduction(const std::vector<std::shared_ptr<Symbol>> &production) { this->production = production; }
+
+    // Display
+    void display();
 };
 
 #endif // PRODUCTION_RULE_H

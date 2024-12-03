@@ -9,11 +9,12 @@ g++ -c -std=c++17 -I./include main.cpp -o build/main.o
 g++ -c -std=c++17 -I./include src/PDA/PushDownAutomaton.cpp  -o build/PushDownAutomaton.o
 g++ -c -std=c++17 -I./include src/PDA/Transition.cpp         -o build/Transition.o
 g++ -c -std=c++17 -I./include src/CFG/ContextFreeGrammar.cpp -o build/ContextFreeGrammar.o
+g++ -c -std=c++17 -I./include src/CFG/ProductionRule.cpp     -o build/ProductionRule.o
 
 # Enlazar los objetos y generar el ejecutable
 g++ build/main.o \
     build/PushDownAutomaton.o build/Transition.o \
-    build/ContextFreeGrammar.o \
+    build/ContextFreeGrammar.o build/ProductionRule.o \
     -o build/main.exe
 
 # Ejecutar el programa
