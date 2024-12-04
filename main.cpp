@@ -10,5 +10,9 @@ int main()
     PushdownAutomaton pda("./resources/PDA/2_empty_stack.csv");
     pda.display();
     cout << "\n";
-    pda.toCFG();
+    
+    ContextFreeGrammar cfg = pda.toCFG();
+    cfg.display();
+    cfg.clean();
+    cfg.display();
 }

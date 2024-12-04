@@ -225,14 +225,13 @@ void ContextFreeGrammar::eliminateUnitPairs()
     // Encontrar pares unitarios
     for (const std::shared_ptr<ProductionRule> &production_rule : production_rules)
         if (production_rule->getProduction().size() == 1)
-        {
-            std::shared_ptr<NonTerminalSymbol> non_terminal_symbol = std::dynamic_pointer_cast<NonTerminalSymbol>(production_rule->getProduction()[0]);
-            if (non_terminal_symbols.find(non_terminal_symbol) != non_terminal_symbols.end())
-            {
-                pairs.insert(std::make_pair(production_rule->getStartSymbol(), non_terminal_symbol));
-                pairs_delete.insert(production_rule);
-            }
-        }
+            for (auto a : non_terminal_symbols)
+                if (production_rule->getProduction()[0] == a)
+                {
+                    pairs.insert(std::make_pair(production_rule->getStartSymbol(), std::static_pointer_cast<NonTerminalSymbol>(production_rule->getProduction()[0])));
+                    pairs_delete.insert(production_rule);
+                    break;
+                }
 
     for (const std::pair<std::shared_ptr<NonTerminalSymbol>, std::shared_ptr<NonTerminalSymbol>> &i : pairs)
         for (const std::pair<std::shared_ptr<NonTerminalSymbol>, std::shared_ptr<NonTerminalSymbol>> &j : pairs)
@@ -312,9 +311,9 @@ void ContextFreeGrammar::eliminateNonGeneratingSymbols()
     for (const std::shared_ptr<NonTerminalSymbol> &non_terminal : non_terminal_delete)
         non_terminal_symbols.erase(non_terminal);
 
-    for (const std::shared_ptr<NonTerminalSymbol> &non_terminal : non_terminal_symbols)
-        if (generating_symbols.find(non_terminal) == generating_symbols.end())
-            non_terminal_symbols.erase(non_terminal);
+    // for (const std::shared_ptr<NonTerminalSymbol> &non_terminal : non_terminal_symbols)
+    //     if (generating_symbols.find(non_terminal) == generating_symbols.end())
+    //         non_terminal_symbols.erase(non_terminal);
 }
 
 void ContextFreeGrammar::eliminateUnreachableSymbols()

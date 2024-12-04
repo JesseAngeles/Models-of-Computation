@@ -384,15 +384,18 @@ void PushdownAutomaton::final_state2empty_set()
     final_states.clear();
 }
 
-void PushdownAutomaton::toCFG()
+ContextFreeGrammar PushdownAutomaton::toCFG()
 {
     // Estado inicial
     std::shared_ptr<NonTerminalSymbol> start_state = std::make_shared<NonTerminalSymbol>("S");
-    std::set<std::shared_ptr<ProductionRule>> start_productions;
+    // std::set<std::shared_ptr<ProductionRule>> start_productions;
     std::set<std::shared_ptr<TerminalSymbol>> terminal_alphabet;
     std::set<std::shared_ptr<NonTerminalSymbol>> non_terminal_alphabet;
+    std::set<std::shared_ptr<ProductionRule>> productions;
 
     std::shared_ptr<StackSymbol> stack_epsilon = std::make_shared<StackSymbol>("E"); // Variable auxiliar
+
+    non_terminal_alphabet.insert(start_state);
 
     // Definir todo el alfabeto de simbolos no terminales = alfabeto de entrada
     for (const std::shared_ptr<InputSymbol> &input_symbol : input_alphabet)
@@ -406,8 +409,8 @@ void PushdownAutomaton::toCFG()
 
         non_terminal_alphabet.insert(std::static_pointer_cast<NonTerminalSymbol>(new_symbol));
         symbol.push_back(new_symbol);
-
-        start_productions.insert(std::make_shared<ProductionRule>(start_state, symbol));
+        std::shared_ptr<ProductionRule> prod = std::make_shared<ProductionRule>(start_state, symbol);
+        productions.insert(prod);
     }
 
     // Iterar para cada transicion
@@ -445,7 +448,7 @@ void PushdownAutomaton::toCFG()
 
         for (const std::vector<int> &comb : combinatorial)
         {
-            std::shared_ptr<State> last_state = transition->getStartState();
+            std::shared_ptr<State> last_state = transition->getEndState();
 
             std::vector<std::shared_ptr<Symbol>> production;
             if (transition_symbol)
@@ -453,13 +456,18 @@ void PushdownAutomaton::toCFG()
 
             for (int i = 0; i < comb.size(); i++)
             {
-                std::string prod_name = makeString(last_state, stack_epsilon, vector_states[comb[i]]);
+                std::string prod_name;
                 if (!stack_vector.empty())
                     prod_name = makeString(last_state, stack_vector[i], vector_states[comb[i]]);
                 else if (last_state == vector_states[comb[i]])
+                {
                     continue;
+                }
                 else
-                    prod_name = makeString(last_state, stack_epsilon, vector_states[comb[i]]); 
+                {
+                    prod_name = makeString(last_state, stack_epsilon, vector_states[comb[i]]);
+                }
+
                 std::shared_ptr<NonTerminalSymbol> prod_symbol = std::make_shared<NonTerminalSymbol>(prod_name);
 
                 // Encontrar prod_name en non_terminal_alphabet
@@ -501,12 +509,25 @@ void PushdownAutomaton::toCFG()
             if (!finded)
                 non_terminal_alphabet.insert(prod_symbol);
 
-            
             std::shared_ptr<ProductionRule> new_production = std::make_shared<ProductionRule>(prod_symbol, production);
-            new_production->display();
+            productions.insert(new_production);
         }
-        std::cout << "\n";
     }
+
+    // Renombrar non_terminal
+    char name = 'A';
+    for (const std::shared_ptr<NonTerminalSymbol> &symbol : non_terminal_alphabet)
+    {
+        if (symbol->getName() == "S")
+            continue;
+        if (name == 'E')
+            name++;
+        std::string new_name = "";
+        new_name += name++;
+        symbol->setName(new_name);
+    }
+
+    return ContextFreeGrammar(non_terminal_alphabet, terminal_alphabet, productions, start_state);
 }
 
 // Displays

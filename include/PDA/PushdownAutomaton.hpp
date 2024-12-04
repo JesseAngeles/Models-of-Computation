@@ -67,7 +67,7 @@ public:
     void empty_set2final_state();
     void final_state2empty_set();
 
-    void toCFG();
+    ContextFreeGrammar toCFG();
 
     // Getters
     const std::set<std::shared_ptr<State>> &getStates() const { return states; }
