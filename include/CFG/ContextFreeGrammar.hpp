@@ -9,8 +9,12 @@
 #include <cmath>
 
 #include "CFG/NonTerminalSymbol.hpp"
-#include "TerminalSymbol.hpp"
-#include "ProductionRule.hpp"
+#include "CFG/TerminalSymbol.hpp"
+#include "CFG/ProductionRule.hpp"
+
+#include "PDA/PushdownAutomaton.hpp"
+
+class PushdownAutomaton;
 
 class ContextFreeGrammar
 {
@@ -48,6 +52,8 @@ public:
     void clean();
 
     void chomskyForm();
+
+    PushdownAutomaton toPDA();
 
     // Getters
     const std::set<std::shared_ptr<NonTerminalSymbol>> getNonTerminalSymbols() const { return non_terminal_symbols; }

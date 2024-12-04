@@ -352,10 +352,6 @@ void ContextFreeGrammar::eliminateUnreachableSymbols()
 
     for (const std::shared_ptr<NonTerminalSymbol> &non_terminal : non_terminal_delete)
         non_terminal_symbols.erase(non_terminal);
-
-    // std::cout << "\n";
-    // for (auto c : achievable_symbols)
-    //     std::cout << c->getName() << " ";
 }
 
 void ContextFreeGrammar::clean()
@@ -364,6 +360,93 @@ void ContextFreeGrammar::clean()
     eliminateUnitPairs();
     eliminateNonGeneratingSymbols();
     eliminateUnreachableSymbols();
+}
+
+// todo
+void ContextFreeGrammar::chomskyForm()
+{
+}
+
+PushdownAutomaton ContextFreeGrammar::toPDA()
+{
+    std::shared_ptr<State> q_0;
+    std::set<std::shared_ptr<InputSymbol>> input_alphabet;
+    std::set<std::shared_ptr<StackSymbol>> stack_alphabet;
+    std::shared_ptr<StackSymbol> z_0;
+    std::set<std::shared_ptr<Transition>> transitions;
+
+    // Definir primer estado
+    q_0 = std::make_shared<State>("q_0");
+
+    // Definir el alfabeto de entrada
+    for (const std::shared_ptr<TerminalSymbol> &symbol : terminal_symbols)
+    {
+        input_alphabet.insert(std::make_shared<InputSymbol>(symbol->getName()));
+        stack_alphabet.insert(std::make_shared<StackSymbol>(symbol->getName()));
+    }
+
+    // Definir el alfabeto de pila
+    for (const std::shared_ptr<NonTerminalSymbol> &symbol : non_terminal_symbols)
+        stack_alphabet.insert(std::make_shared<StackSymbol>(symbol->getName()));
+
+    // Definir fondo de pila
+    for (const std::shared_ptr<StackSymbol> &symbol : stack_alphabet)
+        if (symbol->getName() == start_symbol->getName())
+        {
+            z_0 = symbol;
+            break;
+        }
+
+    // Definir produciones
+    for (const std::shared_ptr<ProductionRule> &production_rule : production_rules)
+    {
+        // Generar todas las producciones
+        std::shared_ptr<State> q = q_0;
+        std::shared_ptr<StackSymbol> last_top;
+        std::stack<std::shared_ptr<StackSymbol>> new_stack;
+
+        for (const std::shared_ptr<StackSymbol> &symbol : stack_alphabet)
+            if (symbol->getName() == production_rule->getStartSymbol()->getName())
+                last_top = symbol;
+
+        // Iterar simbolos de la produccion
+        std::vector<std::shared_ptr<Symbol>> productions = production_rule->getProduction();
+        for (int i = productions.size() - 1; i >= 0; --i)
+        {
+            // Encontrar el simbolo en las pilas
+            for (const std::shared_ptr<StackSymbol> &symbol : stack_alphabet)
+                if (symbol->getName() == productions[i]->getName())
+                    new_stack.push(symbol);
+        }
+
+        std::shared_ptr<Transition> new_transition = std::make_shared<Transition>(q_0, q_0, std::nullopt, last_top, new_stack);
+        transitions.insert(new_transition);
+    };
+
+    // Definir producciones de eliminacion
+    for (const std::shared_ptr<TerminalSymbol> &symbol : terminal_symbols)
+    {
+        std::shared_ptr<InputSymbol> new_input;
+        std::shared_ptr<StackSymbol> new_stack;
+        // Buscar el simbolo en el alfabeto de entrada
+        for (const std::shared_ptr<InputSymbol> &input : input_alphabet)
+            if (symbol->getName() == input->getName())
+                new_input = input;
+
+        for (const std::shared_ptr<StackSymbol> &stack : stack_alphabet)
+            if (symbol->getName() == stack->getName())
+                new_stack = stack;
+
+        std::shared_ptr<Transition> new_transition = std::make_shared<Transition>(q_0, q_0, new_input, new_stack, std::nullopt);
+        transitions.insert(new_transition);
+    }
+
+    std::set<std::shared_ptr<State>> states;
+    states.insert(q_0);
+
+    std::set<std::shared_ptr<State>> final_states;
+
+    return PushdownAutomaton(states, input_alphabet, stack_alphabet, transitions, q_0, z_0, final_states);
 }
 
 // Display

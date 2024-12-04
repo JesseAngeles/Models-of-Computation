@@ -10,13 +10,17 @@
 #include <optional>
 #include <string>
 #include <memory>
+#include <algorithm>
 
 #include "PDA/State.hpp"
 #include "PDA/InputSymbol.hpp"
 #include "PDA/StackSymbol.hpp"
 #include "PDA/Transition.hpp"
+#include "CFG/ContextFreeGrammar.hpp"
 
 #include "PDA/auxVisited.hpp"
+
+class ContextFreeGrammar;
 
 class PushdownAutomaton
 {
@@ -40,6 +44,8 @@ private:
                        std::stack<std::shared_ptr<StackSymbol>> current_stack,
                        std::vector<std::shared_ptr<InputSymbol>> current_chain,
                        std::set<auxVisited> visited);
+    std::string makeString(const std::shared_ptr<State> &, const std::shared_ptr<StackSymbol> &, const std::shared_ptr<State> &);
+    std::vector<int> changeBase(int number, const int &base, const int &size);
 
 public:
     // Constructor
@@ -57,9 +63,11 @@ public:
     // Functions
     bool testChain(std::string);
     const bool isByEmptySet() const { return final_states.empty(); }
-    
+
     void empty_set2final_state();
     void final_state2empty_set();
+
+    void toCFG();
 
     // Getters
     const std::set<std::shared_ptr<State>> &getStates() const { return states; }

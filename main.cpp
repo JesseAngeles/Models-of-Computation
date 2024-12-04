@@ -7,8 +7,8 @@ using namespace std;
 
 int main()
 {
-    ContextFreeGrammar cfg("./resources/CFG/2_rules.csv");
-    cfg.display();
-    cfg.clean();
-    cfg.display();
+    PushdownAutomaton pda("./resources/PDA/2_empty_stack.csv");
+    pda.display();
+    cout << "\n";
+    pda.toCFG();
 }

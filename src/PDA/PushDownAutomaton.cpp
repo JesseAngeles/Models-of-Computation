@@ -268,6 +268,45 @@ bool PushdownAutomaton::recursiveTest(
     return false;
 }
 
+std::string PushdownAutomaton::makeString(const std::shared_ptr<State> &from,
+                                          const std::shared_ptr<StackSymbol> &symbol,
+                                          const std::shared_ptr<State> &to)
+{
+    return "[" + from->getName() + " " + symbol->getName() + " " + to->getName() + "]";
+}
+
+std::vector<int> PushdownAutomaton::changeBase(int number, const int &base, const int &size)
+{
+    std::vector<int> res;
+    if (number == 0)
+    {
+        res.assign(size, 0);
+        return res;
+    }
+
+    while (number > 0)
+    {
+        int residue = number % base;
+        res.push_back(residue);
+        number /= base;
+    }
+
+    std::reverse(res.begin(), res.end());
+
+    if (res.size() < size)
+    {
+        size_t zeros_to_add = size - res.size();
+        res.insert(res.begin(), zeros_to_add, 0);
+    }
+    else if (res.size() > size)
+    {
+        // Truncar si es más grande
+        res = std::vector<int>(res.end() - size, res.end());
+    }
+
+    return res;
+}
+
 // Public functions
 bool PushdownAutomaton::testChain(std::string chain)
 {
@@ -343,6 +382,131 @@ void PushdownAutomaton::final_state2empty_set()
         }
 
     final_states.clear();
+}
+
+void PushdownAutomaton::toCFG()
+{
+    // Estado inicial
+    std::shared_ptr<NonTerminalSymbol> start_state = std::make_shared<NonTerminalSymbol>("S");
+    std::set<std::shared_ptr<ProductionRule>> start_productions;
+    std::set<std::shared_ptr<TerminalSymbol>> terminal_alphabet;
+    std::set<std::shared_ptr<NonTerminalSymbol>> non_terminal_alphabet;
+
+    std::shared_ptr<StackSymbol> stack_epsilon = std::make_shared<StackSymbol>("E"); // Variable auxiliar
+
+    // Definir todo el alfabeto de simbolos no terminales = alfabeto de entrada
+    for (const std::shared_ptr<InputSymbol> &input_symbol : input_alphabet)
+        terminal_alphabet.insert(std::make_shared<TerminalSymbol>(input_symbol->getName()));
+
+    // For cada simbolo se crea una nueva transicion
+    for (const std::shared_ptr<State> &state : states)
+    {
+        std::shared_ptr<Symbol> new_symbol = std::make_shared<Symbol>(makeString(init_state, init_stack_symbol, state));
+        std::vector<std::shared_ptr<Symbol>> symbol;
+
+        non_terminal_alphabet.insert(std::static_pointer_cast<NonTerminalSymbol>(new_symbol));
+        symbol.push_back(new_symbol);
+
+        start_productions.insert(std::make_shared<ProductionRule>(start_state, symbol));
+    }
+
+    // Iterar para cada transicion
+    for (const std::shared_ptr<Transition> &transition : transitions)
+    {
+        // Buscar el simbolo de transicion en los simbolos terminales
+        std::shared_ptr<TerminalSymbol> transition_symbol;
+        for (const std::shared_ptr<TerminalSymbol> &terminal_symbol : terminal_alphabet)
+        {
+            if (transition->getSymbol().has_value() &&
+                transition->getSymbol().value()->getName() == terminal_symbol->getName())
+                transition_symbol = terminal_symbol;
+        }
+
+        // Calcular el numero de producciones
+        int stack_size = transition->getEndTop().size();
+        if (!stack_size)
+            stack_size = 1;
+
+        int total_productions = std::pow(states.size(), stack_size);
+
+        std::vector<std::shared_ptr<State>> vector_states(states.begin(), states.end());
+        std::stack<std::shared_ptr<StackSymbol>> stack_copy = transition->getEndTop();
+        std::vector<std::shared_ptr<StackSymbol>> stack_vector;
+        while (!stack_copy.empty())
+        {
+            stack_vector.push_back(stack_copy.top());
+            stack_copy.pop();
+        }
+
+        // Generar las combinaciones de producciones
+        std::vector<std::vector<int>> combinatorial;
+        for (int i = 0; i < total_productions; i++)
+            combinatorial.push_back(changeBase(i, states.size(), stack_size));
+
+        for (const std::vector<int> &comb : combinatorial)
+        {
+            std::shared_ptr<State> last_state = transition->getStartState();
+
+            std::vector<std::shared_ptr<Symbol>> production;
+            if (transition_symbol)
+                production.push_back(transition_symbol);
+
+            for (int i = 0; i < comb.size(); i++)
+            {
+                std::string prod_name = makeString(last_state, stack_epsilon, vector_states[comb[i]]);
+                if (!stack_vector.empty())
+                    prod_name = makeString(last_state, stack_vector[i], vector_states[comb[i]]);
+                else if (last_state == vector_states[comb[i]])
+                    continue;
+                else
+                    prod_name = makeString(last_state, stack_epsilon, vector_states[comb[i]]); 
+                std::shared_ptr<NonTerminalSymbol> prod_symbol = std::make_shared<NonTerminalSymbol>(prod_name);
+
+                // Encontrar prod_name en non_terminal_alphabet
+                bool finded = false;
+                for (const std::shared_ptr<NonTerminalSymbol> &non_terminal_symbol : non_terminal_alphabet)
+                {
+                    if (non_terminal_symbol->getName() == prod_name)
+                    {
+                        finded = true;
+                        prod_symbol = non_terminal_symbol;
+                        break;
+                    }
+                }
+
+                if (!finded)
+                    non_terminal_alphabet.insert(prod_symbol);
+
+                production.push_back(prod_symbol);
+
+                last_state = vector_states[comb[i]];
+            }
+
+            std::string prod_name = makeString(transition->getStartState(), transition->getInitTop(), last_state);
+            // std::cout << " <- " << prod_name;
+
+            std::shared_ptr<NonTerminalSymbol> prod_symbol = std::make_shared<NonTerminalSymbol>(prod_name);
+            // Encontrar prod_name en non_terminal_alphabet
+            bool finded = false;
+            for (const std::shared_ptr<NonTerminalSymbol> &non_terminal_symbol : non_terminal_alphabet)
+            {
+                if (non_terminal_symbol->getName() == prod_name)
+                {
+                    finded = true;
+                    prod_symbol = non_terminal_symbol;
+                    break;
+                }
+            }
+
+            if (!finded)
+                non_terminal_alphabet.insert(prod_symbol);
+
+            
+            std::shared_ptr<ProductionRule> new_production = std::make_shared<ProductionRule>(prod_symbol, production);
+            new_production->display();
+        }
+        std::cout << "\n";
+    }
 }
 
 // Displays
