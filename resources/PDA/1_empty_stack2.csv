@@ -1,8 +1,0 @@
-states:q0,q1,q2
-input_alphabet:a,b
-stack_alphabet:z0,1
-transitions:
-q0:E:z0,q0:z0
-init_state:q0
-init_stack_symbol:z0
-final_states:

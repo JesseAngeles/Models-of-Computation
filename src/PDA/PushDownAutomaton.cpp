@@ -21,7 +21,7 @@ PushdownAutomaton::PushdownAutomaton(const std::string &file_path)
 {
     std::ifstream file(file_path);
     if (!file.is_open())
-        throw std::runtime_error("No se pudo abrir el archivo.");
+        return;
 
     std::string line;
     std::string init_state, init_stack_symbol;
@@ -324,7 +324,7 @@ bool PushdownAutomaton::testChain(std::string chain)
     return recursiveTest(current_state, current_stack, current_chain, visited);
 }
 
-void PushdownAutomaton::empty_set2final_state()
+void PushdownAutomaton::toFinalStates()
 {
     // Create new states
     std::shared_ptr<State> new_init_state = std::make_shared<State>("a");
@@ -364,7 +364,7 @@ void PushdownAutomaton::empty_set2final_state()
     transitions.insert(new_init_transition);
 }
 
-void PushdownAutomaton::final_state2empty_set()
+void PushdownAutomaton::toEmptyStack()
 {
     // Create new state
     std::shared_ptr<State> new_final_state = std::make_shared<State>("end");
@@ -578,6 +578,8 @@ void PushdownAutomaton::display() const
     std::cout << "\nFinal states: \n";
     for (const std::shared_ptr<State> &state : final_states)
         std::cout << state->getName() << " ";
+    
+    std::cout << std::endl;
 }
 
 void PushdownAutomaton::displayStep(

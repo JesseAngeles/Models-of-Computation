@@ -62,10 +62,9 @@ public:
 
     // Functions
     bool testChain(std::string);
-    const bool isByEmptySet() const { return final_states.empty(); }
 
-    void empty_set2final_state();
-    void final_state2empty_set();
+    void toFinalStates();
+    void toEmptyStack();
 
     ContextFreeGrammar toCFG();
 
@@ -77,6 +76,8 @@ public:
     const std::shared_ptr<State> &getInitState() const { return init_state; }
     const std::shared_ptr<StackSymbol> &getInitStackSymbol() const { return init_stack_symbol; }
     const std::set<std::shared_ptr<State>> &getFinalStates() const { return final_states; }
+
+    const bool isByEmptyStack() const { return final_states.empty(); }
 
     // Setters
     void setStates(const std::set<std::shared_ptr<State>> &states) { this->states = states; }

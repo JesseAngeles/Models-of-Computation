@@ -63,7 +63,8 @@ int main()
             file_name = "./resources/CFG/" + file_name + ".csv";
 
             cfg = std::make_shared<ContextFreeGrammar>(file_name);
-            cfg->display();
+            if (cfg)
+                cfg->display();
         }
         break;
         case 2:
@@ -100,6 +101,7 @@ int main()
         break;
         case 4:
         {
+            cfg->clean();
             cfg->chomskyForm();
             cfg->display();
         }
@@ -118,7 +120,8 @@ int main()
             file_name = "./resources/PDA/" + file_name + ".csv";
 
             pda = std::make_shared<PushdownAutomaton>(file_name);
-            pda->display();
+            if (pda)
+                pda->display();
         }
         break;
         case 7:
@@ -128,25 +131,36 @@ int main()
         break;
         case 8:
         {
-            pda->final_state2empty_set();
+            if (!pda->isByEmptyStack())
+                pda->toEmptyStack();
             pda->display();
         }
         break;
         case 9:
         {
-            pda->empty_set2final_state();
+            if (pda->isByEmptyStack())
+            pda->toFinalStates();
             pda->display();
         }
         break;
         case 10:
         {
+            pda->toEmptyStack();
             cfg = std::make_shared<ContextFreeGrammar>(pda->toCFG());
             cfg->display();
         }
         break;
         case 11:
         {
-            
+            string chain;
+            cout << "Cadena (E para epsilon): ";
+            cin >> chain;
+            if (chain == "E")
+                chain = "";
+            if (pda->testChain(chain))
+                cout << "**ACEPTADA**\n";
+            else
+                cout << "**RECHAZA**\n";
         }
         break;
 

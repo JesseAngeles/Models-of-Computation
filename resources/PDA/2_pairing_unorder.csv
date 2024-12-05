@@ -1,0 +1,14 @@
+states:q0
+input_alphabet:a,b
+stack_alphabet:z0,0,1
+transitions:
+q0:a:z0,q0:0:z0
+q0:b:z0,q0:1:z0
+q0:a:0,q0:0:0
+q0:b:1,q0:1:1
+q0:a:1,q0:
+q0:b:0,q0:
+q0:E:z0,q0:
+init_state:q0
+init_stack_symbol:z0
+final_states:

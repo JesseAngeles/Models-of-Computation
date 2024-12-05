@@ -5,7 +5,7 @@ ContextFreeGrammar::ContextFreeGrammar(const std::string &file_path)
 {
     std::ifstream file(file_path);
     if (!file.is_open())
-        throw std::runtime_error("No se pudo abrir el archivo.");
+        return;
 
     std::string line;
 
