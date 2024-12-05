@@ -16,6 +16,14 @@ public:
 
     // Overloading
     bool operator<(const Symbol &other) const { return name < other.name; }
+    Symbol & operator=(const Symbol &other){
+        if (this == &other)
+            return *this;
+
+        name = other.name;
+
+        return *this;
+    }
 
     // Getters
     const std::string getName() const { return name; }

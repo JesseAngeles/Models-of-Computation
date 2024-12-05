@@ -346,11 +346,20 @@ void ContextFreeGrammar::eliminateUnreachableSymbols()
             non_terminal_delete.insert(production_rule->getStartSymbol());
         }
 
+    std::set<std::shared_ptr<TerminalSymbol>> delete_determinals;
     for (const std::shared_ptr<ProductionRule> &production_rule : production_delete)
         production_rules.erase(production_rule);
 
     for (const std::shared_ptr<NonTerminalSymbol> &non_terminal : non_terminal_delete)
         non_terminal_symbols.erase(non_terminal);
+
+    for (const std::shared_ptr<TerminalSymbol> &symbol : terminal_symbols)
+        if (achievable_symbols.find(symbol) == achievable_symbols.end())
+            terminal_symbols.erase(symbol);
+
+    for (const std::shared_ptr<NonTerminalSymbol> &symbol : non_terminal_symbols)
+        if (achievable_symbols.find(symbol) == achievable_symbols.end())
+            non_terminal_symbols.erase(symbol);
 }
 
 void ContextFreeGrammar::clean()
@@ -364,6 +373,108 @@ void ContextFreeGrammar::clean()
 // todo
 void ContextFreeGrammar::chomskyForm()
 {
+    // Iterar todas las producciones
+    for (const std::shared_ptr<ProductionRule> &production_rule : production_rules)
+    {
+        std::vector<std::shared_ptr<Symbol>> production = production_rule->getProduction();
+
+        // Validar un unico simbolo no terminal
+        if (production.size() == 1 &&
+            terminal_symbols.find(std::static_pointer_cast<TerminalSymbol>(production[0])) != terminal_symbols.end())
+            continue;
+
+        // Dos simbolos no terminales
+        if (production.size() == 2 &&
+            non_terminal_symbols.find(std::static_pointer_cast<NonTerminalSymbol>(production[0])) != non_terminal_symbols.end() &&
+            non_terminal_symbols.find(std::static_pointer_cast<NonTerminalSymbol>(production[1])) != non_terminal_symbols.end())
+            continue;
+            
+        // Generar producciones de simbolos unitarias
+        for (int i = 0; i < production.size(); i++)
+            // Si es un simbolo terminal, intercambiar por otro
+            if (terminal_symbols.find(std::static_pointer_cast<TerminalSymbol>(production[i])) != terminal_symbols.end())
+            {
+                // Nuevo nombre del estado
+                std::string new_name = "V(" + production[i]->getName() + ")";
+                std::shared_ptr<NonTerminalSymbol> new_symbol;
+
+                // Buscar el nombre en los non_terminal_symbols
+                bool finded = false;
+                for (const std::shared_ptr<NonTerminalSymbol> &symbol : non_terminal_symbols)
+                    if (symbol->getName() == new_name)
+                    {
+                        new_symbol = symbol;
+                        finded = true;
+                        break;
+                    }
+
+                if (!finded)
+                {
+                    new_symbol = std::make_shared<NonTerminalSymbol>(new_name);
+                    non_terminal_symbols.insert(new_symbol);
+                }
+
+                // Crear la nueva produccion
+                std::vector<std::shared_ptr<Symbol>> symbols;
+                symbols.push_back(production[i]);
+                std::shared_ptr<ProductionRule> new_production = std::make_shared<ProductionRule>(new_symbol, symbols);
+
+                if (production_rules.find(new_production) == production_rules.end())
+                    production_rules.insert(new_production);
+
+                // Actualiza produccion
+                production[i] = new_production->getStartSymbol();
+            }
+
+        while (production.size() > 2)
+        {
+            std::string new_name = "V(" + production[0]->getName() + "," + production[1]->getName() + ")";
+            std::shared_ptr<NonTerminalSymbol> new_symbol;
+
+            // Buscar el nombre en los non_terminal
+            bool finded = false;
+            for (const std::shared_ptr<NonTerminalSymbol> &symbol : non_terminal_symbols)
+                if (symbol->getName() == new_name)
+                {
+                    new_symbol = symbol;
+                    finded = true;
+                    break;
+                }
+
+            if (!finded)
+            {
+                new_symbol = std::make_shared<NonTerminalSymbol>(new_name);
+                non_terminal_symbols.insert(new_symbol);
+            }
+
+            // Crear nueva produccion
+            std::vector<std::shared_ptr<Symbol>> symbols;
+            symbols.push_back(production[0]);
+            symbols.push_back(production[1]);
+            std::shared_ptr<ProductionRule> new_production = std::make_shared<ProductionRule>(new_symbol, symbols);
+
+            if (production_rules.find(new_production) == production_rules.end())
+                production_rules.insert(new_production);
+
+            // Actualizar produccion
+            production[0] = new_production->getStartSymbol();
+            production.erase(production.begin() + 1);
+        }
+
+        production_rule->setProduction(production);
+    }
+
+    char name = 'A';
+    for (const std::shared_ptr<NonTerminalSymbol> &symbol : non_terminal_symbols)
+    {
+        if (symbol->getName() == "S")
+            continue;
+        if (name == 'E')
+            name++;
+        std::string new_name = "";
+        new_name += name++;
+        symbol->setName(new_name);
+    }
 }
 
 PushdownAutomaton ContextFreeGrammar::toPDA()
