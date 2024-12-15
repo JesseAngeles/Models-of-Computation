@@ -2,8 +2,11 @@
 #define TURING_MACHINE_H
 
 #include <iostream>
+#include <sstream>
+#include <fstream>
 #include <vector>
 #include <set>
+#include <deque>
 #include <memory>
 
 #include "TM/State.hpp"
@@ -20,7 +23,16 @@ private:
     std::set<std::shared_ptr<Transition>> transitions;
     std::shared_ptr<State> init_state;
     std::set<std::shared_ptr<State>> final_states;
-    std::shared_ptr<Symbol> white;
+    std::shared_ptr<Symbol> blank;
+
+    // Functions
+    std::vector<std::string> split(const std::string &line, char delimiter);
+
+    bool isChainValid(std::deque<std::shared_ptr<Symbol>> &chain) const;
+    bool recursiveTest(
+        std::deque<std::shared_ptr<Symbol>> &chain,
+        std::shared_ptr<State> &current_state,
+        int &current_index);
 
 public:
     // Constructor
@@ -36,6 +48,10 @@ public:
 
     TuringMachine(const std::string &file_path);
 
+    // Functions
+    std::deque<std::shared_ptr<Symbol>> createChain(const std::vector<std::string> &string_chain);
+    bool testChain(std::deque<std::shared_ptr<Symbol>> &chain);
+
     // Getters
     const std::set<std::shared_ptr<State>> &getStates() const { return states; }
     const std::set<std::shared_ptr<Symbol>> &getInputAlphabet() const { return input_alphabet; }
@@ -43,7 +59,7 @@ public:
     const std::set<std::shared_ptr<Transition>> &getTransitions() const { return transitions; }
     std::shared_ptr<State> getInitState() const { return init_state; }
     const std::set<std::shared_ptr<State>> &getFinalStates() const { return final_states; }
-    std::shared_ptr<Symbol> getWhite() const { return white; }
+    std::shared_ptr<Symbol> getBlank() const { return blank; }
 
     // Setters
     void setStates(const std::set<std::shared_ptr<State>> &newStates) { states = newStates; }
@@ -52,11 +68,10 @@ public:
     void setTransitions(const std::set<std::shared_ptr<Transition>> &newTransitions) { transitions = newTransitions; }
     void setInitState(const std::shared_ptr<State> &newInitState) { init_state = newInitState; }
     void setFinalStates(const std::set<std::shared_ptr<State>> &newFinalStates) { final_states = newFinalStates; }
-    void setWhite(const std::shared_ptr<Symbol> &newWhite) { white = newWhite; }
+    void setBlank(const std::shared_ptr<Symbol> &newBlank) { blank = newBlank; }
 
     // Display
     void display() const;
-
 };
 
 #endif // TURING_MACHINE_H
