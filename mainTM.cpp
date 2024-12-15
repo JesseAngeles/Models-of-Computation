@@ -22,7 +22,7 @@ int main()
 
     auto b = tm.createChain(a);
 
-    if (tm.testChain(b))
+    if (tm.testChain(b, true))
         cout << "true";
     else
         cout << "false";

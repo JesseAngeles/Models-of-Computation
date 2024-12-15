@@ -181,8 +181,12 @@ bool TuringMachine::isChainValid(std::deque<std::shared_ptr<Symbol>> &chain) con
 bool TuringMachine::recursiveTest(
     std::deque<std::shared_ptr<Symbol>> &chain,
     std::shared_ptr<State> &current_state,
-    int &current_index)
+    int &current_index,
+    bool display_step)
 {
+    if (display_step)
+        displayStep(chain, current_state, current_index);
+
     // Alcanzo un estado de aceptacion
     if (final_states.find(current_state) != final_states.end())
         return true;
@@ -213,7 +217,7 @@ bool TuringMachine::recursiveTest(
             // new state
             std::shared_ptr<State> new_current_state = transition->getEndState();
 
-            if (recursiveTest(new_chain, new_current_state, new_index))
+            if (recursiveTest(new_chain, new_current_state, new_index, display_step))
                 return true;
         }
     }
@@ -240,7 +244,7 @@ std::deque<std::shared_ptr<Symbol>> TuringMachine::createChain(const std::vector
     return symbol_chain;
 }
 
-bool TuringMachine::testChain(std::deque<std::shared_ptr<Symbol>> &chain)
+bool TuringMachine::testChain(std::deque<std::shared_ptr<Symbol>> &chain, bool display_step)
 {
     if (!isChainValid(chain))
         return false;
@@ -251,8 +255,10 @@ bool TuringMachine::testChain(std::deque<std::shared_ptr<Symbol>> &chain)
     int current_index = 1;
     std::shared_ptr<State> current_state = init_state;
 
-    return recursiveTest(chain, current_state, current_index);
+    if (display_step)
+        displayStep(chain, current_state, current_index);
 
+    return recursiveTest(chain, current_state, current_index, display_step);
 }
 
 // Display
@@ -282,4 +288,26 @@ void TuringMachine::display() const
         std::cout << final_state->getName() << " ";
 
     std::cout << std::endl;
+}
+
+void TuringMachine::displayStep(
+    std::deque<std::shared_ptr<Symbol>> &chain,
+    std::shared_ptr<State> &current_state,
+    int &current_index) const
+{
+    for (int i = 0; i < current_index; i++)
+        std::cout << "     ";
+
+    std::cout << current_state->getName() << std::endl;
+
+    for (int i = 0; i < current_index; i++)
+        std::cout << "     ";
+
+    std::cout << "!\n";
+
+    for (const std::shared_ptr<Symbol> &symbol : chain)
+        std::cout << symbol->getName() << "    ";
+
+    std::cout << std::endl
+              << std::endl;
 }

@@ -32,7 +32,8 @@ private:
     bool recursiveTest(
         std::deque<std::shared_ptr<Symbol>> &chain,
         std::shared_ptr<State> &current_state,
-        int &current_index);
+        int &current_index,
+        bool display_step);
 
 public:
     // Constructor
@@ -50,7 +51,7 @@ public:
 
     // Functions
     std::deque<std::shared_ptr<Symbol>> createChain(const std::vector<std::string> &string_chain);
-    bool testChain(std::deque<std::shared_ptr<Symbol>> &chain);
+    bool testChain(std::deque<std::shared_ptr<Symbol>> &chain, bool display_step);
 
     // Getters
     const std::set<std::shared_ptr<State>> &getStates() const { return states; }
@@ -72,6 +73,9 @@ public:
 
     // Display
     void display() const;
+    void displayStep(std::deque<std::shared_ptr<Symbol>> &chain,
+                     std::shared_ptr<State> &current_state,
+                     int &current_index) const;
 };
 
 #endif // TURING_MACHINE_H
