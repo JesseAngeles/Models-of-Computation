@@ -10,8 +10,13 @@ vector<string> stringToVector(string &);
 
 int main()
 {
+    string file;
+    string file_path = "resources/TM/";
+    cout << "File: ";
+    cin >> file;
+
     // Numero par de ceros
-    TuringMachine tm("resources/TM/pair.csv");
+    TuringMachine tm(file_path + file + ".csv");
     tm.display();
 
     string chain;
